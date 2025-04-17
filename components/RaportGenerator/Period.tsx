@@ -4,8 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import useRaportContext from "@/contexts/useRaportContext";
 import { periodType } from "@/lib/types";
-import PeriodDates from "./PeriodDates";
-import Title from "./Title";
+import PeriodDates from "../PeriodDates";
+import Title from "../Title";
 
 const Period = () => {
   const { periodType, setPeriodType, generateReport, resetFilters } = useRaportContext()

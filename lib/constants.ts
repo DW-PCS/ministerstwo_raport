@@ -72,4 +72,4 @@ const allCommodities = [
   ]
 
 
-export { commodityGroups, ports, portData, allCommodities }
+export { allCommodities, commodityGroups, portData, ports };

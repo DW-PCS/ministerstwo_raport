@@ -9,13 +9,13 @@ import Title from "../Title";
 const CommodityGroups = () => {
 
 
-    const { selectedCommodities, handleCommodityChange } = useRaportContext()
+  const { selectedCommodities, handleCommodityChange } = useRaportContext()
 
   return (
     <div className="space-y-4">
       <Title text="Grupy Towarowe" />
       <div className="space-y-3 max-h-60 overflow-y-auto">
-        {commodityGroups.map((commodity:string) => (
+        {commodityGroups.map((commodity: string) => (
           <div key={commodity} className="flex items-center space-x-2">
             <Checkbox
               id={`commodity-${commodity}`}
@@ -29,7 +29,7 @@ const CommodityGroups = () => {
           </div>
         ))}
       </div>
-  </div>
+    </div>
   )
 }
 

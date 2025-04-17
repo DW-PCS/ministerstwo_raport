@@ -11,7 +11,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 
 export default function ReportResults() {
 
-  const { periodType, startDate, endDate, selectedCommodities,selectedPorts} = useRaportContext()
+  const { periodType, startDate, endDate, selectedCommodities, selectedPorts } = useRaportContext()
 
 
   const commodities = selectedCommodities.length > 0 ? selectedCommodities : ["Węgiel", "Ruda", "Zboże"]
@@ -23,8 +23,8 @@ export default function ReportResults() {
   return (
     <Card className="shadow-lg rounded-2xl overflow-hidden border-0">
       <CardHeader className="border-b bg-white flex flex-col sm:flex-row justify-between items-center">
-          <CardTitle className="text-xl font-semibold">Szczegółowe dane</CardTitle>
-          <span className="text-gray-500">{getPeriodInfo({ startDate, endDate, periodType })}</span>
+        <CardTitle className="text-xl font-semibold">Szczegółowe dane</CardTitle>
+        <span className="text-gray-500">{getPeriodInfo({ startDate, endDate, periodType })}</span>
       </CardHeader>
       <CardContent className="p-0">
         <div>
