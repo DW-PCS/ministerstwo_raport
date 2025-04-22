@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import useRaportContext from "@/contexts/useRaportContext"
+import useRaportContext from "@/contexts/RaportContext"
 import { allCommodities, portData } from "@/lib/constants"
 import { formatNumber, generateChartData, getPeriodInfo } from "@/lib/helpers"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"

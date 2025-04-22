@@ -1,8 +1,8 @@
-import { RaportProvider } from "@/contexts/useRaportContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { RaportProvider } from "@/contexts/RaportContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import SessionClinetProvider from "./providers/SessionClinetProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,11 +31,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionClinetProvider>
+        <AuthProvider>
           <RaportProvider>
             {children}
           </RaportProvider>
-        </SessionClinetProvider>
+        </AuthProvider>
       </body>
     </html>
   );
