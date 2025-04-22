@@ -24,6 +24,10 @@ export function useAuthCallback() {
 
         const tokenResponse = await exchangeCodeForToken(code, state);
 
+        if (!tokenResponse) {
+          throw new Error('Failed to exchange code for token');
+        }
+
         storeAuthTokens(tokenResponse);
 
         router.push('/');

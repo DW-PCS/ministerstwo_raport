@@ -1,28 +1,14 @@
 'use client';
 
+import { toast } from "@/components/ui/use-toast";
+import { base64UrlEncode, generateCodeVerifier, getAppOrigin } from "../helpers";
+
 const config = {
   clientId: process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID,
   authority: 'https://login.microsoftonline.com/common',
   scopes: [process.env.NEXT_PUBLIC_AZURE_AD_SCOPE]
 };
 
-function getAppOrigin(): string {
-  if (typeof window === 'undefined') return '';
-  return window.location.origin;
-}
-
-function generateCodeVerifier(): string {
-  const array = new Uint8Array(32);
-  window.crypto.getRandomValues(array);
-  return base64UrlEncode(array);
-}
-
-function base64UrlEncode(buffer: ArrayBufferLike | Uint8Array): string {
-  return btoa(String.fromCharCode.apply(null, [...(buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer))]))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-}
 
 async function generateCodeChallenge(codeVerifier: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -34,31 +20,40 @@ async function generateCodeChallenge(codeVerifier: string): Promise<string> {
 export async function loginWithAzure(): Promise<void> {
   if (typeof window === 'undefined') return;
 
-  const codeVerifier = generateCodeVerifier();
-  sessionStorage.setItem('code_verifier', codeVerifier);
+  try {
+    const codeVerifier = generateCodeVerifier();
+    sessionStorage.setItem('code_verifier', codeVerifier);
 
-  const codeChallenge = await generateCodeChallenge(codeVerifier);
+    const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-  const state = generateRandomState();
-  sessionStorage.setItem('auth_state', state);
+    const state = generateRandomState();
+    sessionStorage.setItem('auth_state', state);
 
-  const appOrigin = getAppOrigin();
-  const redirectUri = `${appOrigin}/auth/azure-ad`;
+    const appOrigin = getAppOrigin();
+    const redirectUri = `${appOrigin}/auth/azure-ad`;
 
-  const authUrl = new URL(`${config.authority}/oauth2/v2.0/authorize`);
-  if (!config.clientId) {
-    throw new Error('Azure AD Client ID is not defined');
+    const authUrl = new URL(`${config.authority}/oauth2/v2.0/authorize`);
+    if (!config.clientId) {
+      throw new Error('Azure AD Client ID is not defined');
+    }
+    authUrl.searchParams.append('client_id', config.clientId);
+    authUrl.searchParams.append('response_type', 'code');
+    authUrl.searchParams.append('redirect_uri', redirectUri);
+    authUrl.searchParams.append('scope', config.scopes.join(' '));
+    authUrl.searchParams.append('response_mode', 'query');
+    authUrl.searchParams.append('state', state);
+    authUrl.searchParams.append('code_challenge', codeChallenge);
+    authUrl.searchParams.append('code_challenge_method', 'S256');
+
+    window.location.href = authUrl.toString();
+  } catch (error) {
+    console.error('Login initialization error:', error);
+    toast({
+      variant: "destructive",
+      title: "Authentication Error",
+      description: error instanceof Error ? error.message : "Failed to initialize login process"
+    });
   }
-  authUrl.searchParams.append('client_id', config.clientId);
-  authUrl.searchParams.append('response_type', 'code');
-  authUrl.searchParams.append('redirect_uri', redirectUri);
-  authUrl.searchParams.append('scope', config.scopes.join(' '));
-  authUrl.searchParams.append('response_mode', 'query');
-  authUrl.searchParams.append('state', state);
-  authUrl.searchParams.append('code_challenge', codeChallenge);
-  authUrl.searchParams.append('code_challenge_method', 'S256');
-
-  window.location.href = authUrl.toString();
 }
 
 interface TokenResponse {
@@ -68,7 +63,7 @@ interface TokenResponse {
   [key: string]: unknown;
 }
 
-export async function exchangeCodeForToken(code: string, state: string): Promise<TokenResponse> {
+export async function exchangeCodeForToken(code: string, state: string): Promise<TokenResponse | null> {
   try {
     const savedState: string | null = sessionStorage.getItem('auth_state');
     if (state !== savedState) {
@@ -92,17 +87,34 @@ export async function exchangeCodeForToken(code: string, state: string): Promise
     });
 
     if (!response.ok) {
-      const errorData: { error?: string } = await response.json();
-      throw new Error(errorData.error || 'Failed to exchange code for token');
+      const errorData = await response.json();
+      const errorMessage = errorData.error || `Failed to exchange code for token (${response.status})`;
+          toast({
+      title:  `Failed to exchange code for token (${response.status})`,
+      description: errorMessage
+    });
+
+      throw new Error(errorMessage);
     }
 
     sessionStorage.removeItem('code_verifier');
     sessionStorage.removeItem('auth_state');
 
-    return await response.json() as TokenResponse;
+    const tokenData = await response.json() as TokenResponse;
+    toast({
+      title: "Authentication Successful",
+      description: "You have successfully signed in."
+    });
+
+    return tokenData;
   } catch (error) {
     console.error('Error exchanging code for token:', error);
-    throw error;
+    toast({
+      variant: "destructive",
+      title: "Authentication Failed",
+      description: error instanceof Error ? error.message : "Failed to complete the authentication process"
+    });
+    return null;
   }
 }
 
@@ -110,7 +122,14 @@ export async function refreshToken(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
 
   const currentRefreshToken = sessionStorage.getItem('azure_refresh_token');
-  if (!currentRefreshToken) return false;
+  if (!currentRefreshToken) {
+    toast({
+      variant: "destructive",
+      title: "Session Expired",
+      description: "Your session has expired. Please sign in again."
+    });
+    return false;
+  }
 
   try {
     const response = await fetch('/api/auth/refresh', {
@@ -124,10 +143,15 @@ export async function refreshToken(): Promise<boolean> {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to refresh token');
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Token refresh failed (${response.status})`);
     }
 
     const tokenData = await response.json();
+    toast({
+      title: "Session Updated",
+      description: "Your session has been successfully refreshed."
+    });
 
     sessionStorage.setItem('azure_token', tokenData.access_token);
     sessionStorage.setItem('azure_refresh_token', tokenData.refresh_token);
@@ -136,6 +160,11 @@ export async function refreshToken(): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('Error refreshing token:', error);
+    toast({
+      variant: "destructive",
+      title: "Session Refresh Failed",
+      description: error instanceof Error ? error.message : "Failed to refresh your session. Please sign in again."
+    });
     return false;
   }
 }
