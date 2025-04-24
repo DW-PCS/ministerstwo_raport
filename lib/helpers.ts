@@ -42,28 +42,6 @@ export const generateChartData = (ports: string[], commodities: string[]) => {
   });
 };
 
-export function getAppOrigin(): string {
-  if (typeof window === 'undefined') return '';
-  return window.location.origin;
-}
-
-export function generateCodeVerifier(): string {
-  const array = new Uint8Array(32);
-  window.crypto.getRandomValues(array);
-  return base64UrlEncode(array);
-}
-
-export function base64UrlEncode(buffer: ArrayBufferLike | Uint8Array): string {
-  return btoa(
-    String.fromCharCode.apply(null, [
-      ...(buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer)),
-    ])
-  )
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-}
-
 
 export function getAppOrigin(): string {
   if (typeof window === 'undefined') return '';
