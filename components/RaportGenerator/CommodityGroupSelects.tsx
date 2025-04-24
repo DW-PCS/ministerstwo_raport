@@ -6,7 +6,7 @@ import { commodityGroups } from "@/lib/constants";
 import Title from "../Title";
 
 
-const CommodityGroups = () => {
+const CommodityGroupSelects = () => {
 
 
   const { selectedCommodities, handleCommodityChange } = useRaportContext()
@@ -33,4 +33,4 @@ const CommodityGroups = () => {
   )
 }
 
-export default CommodityGroups
+export default CommodityGroupSelects

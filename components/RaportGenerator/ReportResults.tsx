@@ -14,8 +14,8 @@ export default function ReportResults() {
   const { periodType, startDate, endDate, selectedCommodities, selectedPorts } = useRaportContext()
 
 
-  const commodities = selectedCommodities.length > 0 ? selectedCommodities : ["Węgiel", "Ruda", "Zboże"]
-  const chartData = generateChartData(selectedPorts, commodities)
+
+  const chartData = generateChartData(selectedPorts, selectedCommodities)
   const COLORS = ["#1a0069", "#00edc2", "#ffc658", "#ff8042", "#0088fe", "#00C49F"]
 
 
@@ -46,7 +46,7 @@ export default function ReportResults() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    {commodities.map((commodity, index) => (
+                    {selectedCommodities.map((commodity, index) => (
                       <Bar key={commodity} dataKey={commodity} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </BarChart>
@@ -73,7 +73,7 @@ export default function ReportResults() {
 
                           if (
                             !hasData ||
-                            (!commodities.includes(commodity) &&
+                            (!selectedCommodities.includes(commodity) &&
                               !["SUMA (TONY)", "KONTENERY (TEU)"].includes(commodity))
                           ) {
                             return null

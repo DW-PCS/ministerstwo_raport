@@ -5,7 +5,7 @@ import useRaportContext from "@/contexts/RaportContext";
 import { ports } from "@/lib/constants";
 import Title from "../Title";
 
-const Ports = () => {
+const PortSelects = () => {
 
   const { selectedPorts, handlePortChange } = useRaportContext()
   return (
@@ -30,4 +30,4 @@ const Ports = () => {
   )
 }
 
-export default Ports
+export default PortSelects

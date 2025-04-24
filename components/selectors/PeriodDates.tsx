@@ -1,26 +1,22 @@
-import { CustomDatePicker } from "@/components/DatePicker";
-import { Label } from "@/components/ui/label";
+import { CustomDatePicker } from '@/components/selectors/DatePicker';
+import { Label } from '@/components/ui/label';
 import useRaportContext from '@/contexts/RaportContext';
 const PeriodDates = () => {
-  const { startDate, setEndDate, setStartDate, endDate, periodType } = useRaportContext()
+  const { startDate, setEndDate, setStartDate, endDate } = useRaportContext();
 
   const handleEndDateChange = (date?: Date) => {
     if (date && startDate && date < startDate) {
       return;
     }
     setEndDate(date);
-  }
+  };
 
   const handleStartDateChange = (date?: Date) => {
     setStartDate(date);
     if (date && endDate && date > endDate) {
       setEndDate(undefined);
     }
-  }
-
-  if (periodType !== 'konkretne') {
-    return
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -46,7 +42,7 @@ const PeriodDates = () => {
         />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default PeriodDates
+export default PeriodDates;
