@@ -1,7 +1,14 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/ReportMI/:path*',
+        destination:
+          'https://pcscoreapi-h5hvg0dkdxcme7gh.polandcentral-01.azurewebsites.net//ReportMI/:path*',
+      },
+    ];
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

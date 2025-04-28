@@ -1,6 +1,7 @@
+import { exchangeCodeForToken } from '@/lib/auth/authService';
+import Cookies from 'js-cookie';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { exchangeCodeForToken } from '@/lib/auth/authService';
 
 export function useAuthCallback() {
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +49,22 @@ export function useAuthCallback() {
 function storeAuthTokens(tokenResponse: {
   access_token: string;
   refresh_token: string;
-  expires_in: number
+  expires_in: number;
 }) {
+  const expiryDate = new Date(Date.now() + tokenResponse.expires_in * 1000);
+
   sessionStorage.setItem('azure_token', tokenResponse.access_token);
   sessionStorage.setItem('azure_refresh_token', tokenResponse.refresh_token);
-  sessionStorage.setItem(
-    'azure_token_expiry',
-    (Date.now() + (tokenResponse.expires_in * 1000)).toString()
-  );
+  sessionStorage.setItem('azure_token_expiry', expiryDate.getTime().toString());
+
+  const cookieOptions = {
+    expires: expiryDate,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict' as const,
+    path: '/',
+  };
+
+  Cookies.set('azure_token', tokenResponse.access_token, cookieOptions);
+  Cookies.set('azure_refresh_token', tokenResponse.refresh_token, cookieOptions);
+  Cookies.set('azure_token_expiry', expiryDate.getTime().toString(), cookieOptions);
 }

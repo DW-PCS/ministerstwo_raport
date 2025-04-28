@@ -1,8 +1,8 @@
-"use client"
-import { pl } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+'use client';
+import { pl } from 'date-fns/locale';
+import { CalendarIcon } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface CustomDatePickerProps {
   date?: Date;
@@ -15,12 +15,12 @@ interface CustomDatePickerProps {
 export function CustomDatePicker({
   date,
   setDate,
-  placeholder = "Wybierz datę",
+  placeholder = 'Wybierz datę',
   minDate,
-  maxDate
+  maxDate,
 }: CustomDatePickerProps) {
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <DatePicker
         selected={date}
         onChange={(date: Date | null) => setDate(date ?? undefined)}

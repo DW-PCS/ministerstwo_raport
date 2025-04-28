@@ -22,8 +22,12 @@ export async function POST(request: NextRequest) {
     const { refreshToken } = body;
     const params = new URLSearchParams();
 
-    if (!process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID || !process.env.NEXT_PUBLIC_AZURE_AD_ENDPOINT|| !process.env.NEXT_PUBLIC_AZURE_AD_SCOPE) {
-        throw new Error('env variable is not defined in the environment variables.');
+    if (
+      !process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID ||
+      !process.env.NEXT_PUBLIC_AZURE_AD_ENDPOINT ||
+      !process.env.NEXT_PUBLIC_AZURE_AD_SCOPE
+    ) {
+      throw new Error('env variable is not defined in the environment variables.');
     }
 
     params.append('client_id', process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID);
@@ -31,18 +35,23 @@ export async function POST(request: NextRequest) {
     params.append('refresh_token', refreshToken);
     params.append('scope', process.env.NEXT_PUBLIC_AZURE_AD_SCOPE);
 
-    const response = await axios.post<TokenResponse>(process.env.NEXT_PUBLIC_AZURE_AD_ENDPOINT, params.toString(), {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+    const response = await axios.post<TokenResponse>(
+      process.env.NEXT_PUBLIC_AZURE_AD_ENDPOINT,
+      params.toString(),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       }
-    });
+    );
 
     return NextResponse.json(response.data);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    const errorResponse = axios.isAxiosError(error) && error.response?.data
-      ? (error.response.data as ErrorResponse)
-      : { error: errorMessage };
+    const errorResponse =
+      axios.isAxiosError(error) && error.response?.data
+        ? (error.response.data as ErrorResponse)
+        : { error: errorMessage };
 
     console.error('Token refresh error:', errorResponse);
     return NextResponse.json(
