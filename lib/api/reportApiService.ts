@@ -9,6 +9,7 @@ async function fetchApi(
     method?: string;
     body?: unknown;
     headers?: Record<string, string>;
+    cache?: 'force-cache' | 'no-store' | 'default' | 'only-if-cached';
   } = {}
 ) {
   const cookieStore = await cookies();
@@ -28,6 +29,7 @@ async function fetchApi(
     method: options.method || 'GET',
     headers,
     body: options.body ? JSON.stringify(options.body) : undefined,
+    cache: options.cache ? options.cache : 'default',
   });
 
   if (!response.ok) {
@@ -46,6 +48,7 @@ export async function getProductGroups(data: DspRequestData) {
   return fetchApi('ReportMI/VproductGroup', {
     method: 'GET',
     body: data,
+    cache: 'no-store',
   });
 }
 

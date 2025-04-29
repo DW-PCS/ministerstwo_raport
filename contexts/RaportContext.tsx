@@ -58,61 +58,15 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const resetFilters = () => {
-    setSelectedPorts([]);
-    setSelectedCommodities([]);
-    setPeriodType('konkretne');
     setStartDate(undefined);
     setEndDate(undefined);
-    setHalfYear('I półrocze');
-    setQuarter('I_kwrtał');
-    setYear('2024');
     setIsReportGenerated(false);
   };
 
-  type ReportParameters = {
-    selectedPorts: string[];
-    selectedCommodities: string[];
-    periodType: periodType;
-    year?: string;
-    halfYear?: halfYearType;
-    quarter?: quarterTypes;
-    month?: monthTypes;
-    startDate?: Date | undefined;
-    endDate?: Date | undefined;
-  };
-
   const generateReport = () => {
-    const selectedValues: ReportParameters = {
-      selectedPorts,
-      selectedCommodities,
-      periodType,
-    };
-
-    switch (periodType) {
-      case 'rok':
-        selectedValues.year = year;
-        break;
-      case 'półrocze':
-        selectedValues.year = year;
-        selectedValues.halfYear = halfYear;
-        break;
-      case 'kwartał':
-        selectedValues.year = year;
-        selectedValues.quarter = quarter;
-        break;
-      case 'miesiąc':
-        selectedValues.year = year;
-        selectedValues.month = month;
-        break;
-      case 'konkretne':
-        selectedValues.startDate = startDate;
-        selectedValues.endDate = endDate;
-        break;
-    }
-
-    console.log('Generating report with parameters:', selectedValues);
     setIsReportGenerated(true);
   };
+
   const value = {
     selectedPorts,
     selectedCommodities,
@@ -129,12 +83,12 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
     setPeriodType,
     setStartDate,
     setEndDate,
+    resetFilters,
+    generateReport,
     setMonth,
     setQuarter,
     setHalfYear,
     setYear,
-    resetFilters,
-    generateReport,
   };
 
   return <RaportContext.Provider value={value}>{children}</RaportContext.Provider>;
