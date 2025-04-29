@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import useRaportContext from '@/contexts/RaportContext';
 import { allCommodities, allCommoditiesMap, COLORS, portData } from '@/lib/constants';
-import { formatNumber, generateChartData, getPeriodInfo } from '@/lib/helpers';
+import { formatNumber, generateChartData } from '@/lib/helpers';
 import {
   Bar,
   BarChart,
@@ -28,21 +28,23 @@ interface ReportResultsProps {
 }
 
 export default function ReportResults({ data }: ReportResultsProps) {
-  const { periodType, startDate, endDate, selectedCommodities, selectedPorts } = useRaportContext();
+  const { selectedCommodities, selectedPorts } = useRaportContext();
 
   const mappedCommodities = selectedCommodities.map(commodity => allCommoditiesMap[commodity]);
+
   const chartData = generateChartData({
     ports: selectedPorts,
     commodities: mappedCommodities,
     data,
     selectedCommodities,
   });
+  const commodityKeys =
+    chartData.length >= 1 ? Object.keys(chartData[0]).filter(key => key !== 'name') : [];
 
   return (
     <Card className="shadow-lg rounded-2xl overflow-hidden border-0">
       <CardHeader className="border-b bg-white flex flex-col sm:flex-row justify-between items-center">
         <CardTitle className="text-xl font-semibold">Szczegółowe dane</CardTitle>
-        <span className="text-gray-500">{getPeriodInfo({ startDate, endDate, periodType })}</span>
       </CardHeader>
       <CardContent className="p-0">
         <div>
@@ -64,15 +66,15 @@ export default function ReportResults({ data }: ReportResultsProps) {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    {mappedCommodities.map((commodity, index) => {
-                      return (
+                    {commodityKeys
+                      .filter(key => chartData[0][key] !== undefined)
+                      .map((commodityKey, index) => (
                         <Bar
-                          key={commodity}
-                          dataKey={commodity}
+                          key={commodityKey}
+                          dataKey={commodityKey}
                           fill={COLORS[index % COLORS.length]}
                         />
-                      );
-                    })}
+                      ))}
                   </BarChart>
                 </ResponsiveContainer>
               </div>

@@ -9,7 +9,7 @@ import ReportResults from './ReportResults';
 interface ReportGeneratorProps {
   ports: AppClientsTypes[];
   groups: string[];
-  data: unknown[];
+  data: { port: string; kod: string; ilosc: number }[];
 }
 
 export default function ReportGenerator({ ports, groups, data }: ReportGeneratorProps) {
@@ -22,7 +22,7 @@ export default function ReportGenerator({ ports, groups, data }: ReportGenerator
           <PeriodSelects />
         </CardContent>
       </Card>
-      <ReportResults data={data} groups={groups} />
+      <ReportResults data={data} />
     </div>
   );
 }

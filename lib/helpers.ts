@@ -76,10 +76,18 @@ export const generateChartData = ({
   return ports.map(port => {
     const portData: { name: string; [key: string]: unknown } = { name: port };
 
-    selectedCommodities.forEach(commodity => {
-      const commodityDisplayName = allCommoditiesMap[commodity];
+    if (!processedData[port]) {
+      console.warn(`Port ${port} not found in processed data`);
+      return portData;
+    }
 
-      portData[commodityDisplayName] = processedData[port][commodity];
+    selectedCommodities?.forEach(commodity => {
+      const commodityDisplayName = allCommoditiesMap[commodity] || commodity;
+      if (processedData[port] && processedData[port][commodity] !== undefined) {
+        portData[commodityDisplayName] = processedData[port][commodity];
+      } else {
+        portData[commodityDisplayName] = 0;
+      }
     });
 
     return portData;
