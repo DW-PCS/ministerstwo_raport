@@ -17,9 +17,9 @@ export interface DspCargoTypeTypes {
 
 export interface DspPeriodTypes {
   year: number;
-  halfYear: number;
-  quarter: number;
-  month: number;
+  halfYear?: number;
+  quarter?: number;
+  month?: number;
   startDate: Date | string;
   endDate: Date | string;
 }

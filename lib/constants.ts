@@ -1,4 +1,3 @@
-const ports = ['Szczecin', 'Gdańsk', 'Gdynia', 'Kołobrzeg', 'Świnoujście'];
 const commodityGroups = [
   'Węgiel',
   'Ruda',
@@ -75,8 +74,18 @@ const allCommodities = [
   'Drobnica',
   'Inne masowe',
   'Paliwa płynne',
-  'SUMA (TONY)',
-  'KONTENERY (TEU)',
 ];
 
-export { allCommodities, commodityGroups, portData, ports };
+const allCommoditiesMap: Record<string, string> = {
+  C: 'Węgiel',
+  D: 'Ruda',
+  M: 'Zboże',
+  P: 'Drewno',
+  R: 'Drobnica',
+  W: 'Inne masowe',
+  Z: 'Paliwa płynne',
+};
+
+const COLORS = ['#1a0069', '#00edc2', '#ffc658', '#ff8042', '#0088fe', '#00C49F'];
+
+export { allCommodities, allCommoditiesMap, COLORS, commodityGroups, portData };

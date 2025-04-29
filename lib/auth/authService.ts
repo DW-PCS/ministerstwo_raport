@@ -1,14 +1,13 @@
 'use client';
 
-import { toast } from "@/components/ui/use-toast";
-import { base64UrlEncode, generateCodeVerifier, getAppOrigin } from "../helpers";
+import { toast } from '@/components/ui/use-toast';
+import { base64UrlEncode, generateCodeVerifier, getAppOrigin } from '../helpers';
 
 const config = {
   clientId: process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID,
   authority: 'https://login.microsoftonline.com/common',
-  scopes: [process.env.NEXT_PUBLIC_AZURE_AD_SCOPE]
+  scopes: [process.env.NEXT_PUBLIC_AZURE_AD_SCOPE],
 };
-
 
 async function generateCodeChallenge(codeVerifier: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -49,9 +48,9 @@ export async function loginWithAzure(): Promise<void> {
   } catch (error) {
     console.error('Login initialization error:', error);
     toast({
-      variant: "destructive",
-      title: "Authentication Error",
-      description: error instanceof Error ? error.message : "Failed to initialize login process"
+      variant: 'destructive',
+      title: 'Authentication Error',
+      description: error instanceof Error ? error.message : 'Failed to initialize login process',
     });
   }
 }
@@ -63,7 +62,10 @@ interface TokenResponse {
   [key: string]: unknown;
 }
 
-export async function exchangeCodeForToken(code: string, state: string): Promise<TokenResponse | null> {
+export async function exchangeCodeForToken(
+  code: string,
+  state: string
+): Promise<TokenResponse | null> {
   try {
     const savedState: string | null = sessionStorage.getItem('auth_state');
     if (state !== savedState) {
@@ -78,21 +80,22 @@ export async function exchangeCodeForToken(code: string, state: string): Promise
     const response: Response = await fetch('/api/auth/token', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         code,
-        codeVerifier
-      })
+        codeVerifier,
+      }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      const errorMessage = errorData.error || `Failed to exchange code for token (${response.status})`;
-          toast({
-      title:  `Failed to exchange code for token (${response.status})`,
-      description: errorMessage
-    });
+      const errorMessage =
+        errorData.error || `Failed to exchange code for token (${response.status})`;
+      toast({
+        title: `Failed to exchange code for token (${response.status})`,
+        description: errorMessage,
+      });
 
       throw new Error(errorMessage);
     }
@@ -100,19 +103,20 @@ export async function exchangeCodeForToken(code: string, state: string): Promise
     sessionStorage.removeItem('code_verifier');
     sessionStorage.removeItem('auth_state');
 
-    const tokenData = await response.json() as TokenResponse;
+    const tokenData = (await response.json()) as TokenResponse;
     toast({
-      title: "Authentication Successful",
-      description: "You have successfully signed in."
+      title: 'Authentication Successful',
+      description: 'You have successfully signed in.',
     });
 
     return tokenData;
   } catch (error) {
     console.error('Error exchanging code for token:', error);
     toast({
-      variant: "destructive",
-      title: "Authentication Failed",
-      description: error instanceof Error ? error.message : "Failed to complete the authentication process"
+      variant: 'destructive',
+      title: 'Authentication Failed',
+      description:
+        error instanceof Error ? error.message : 'Failed to complete the authentication process',
     });
     return null;
   }
@@ -124,9 +128,9 @@ export async function refreshToken(): Promise<boolean> {
   const currentRefreshToken = sessionStorage.getItem('azure_refresh_token');
   if (!currentRefreshToken) {
     toast({
-      variant: "destructive",
-      title: "Session Expired",
-      description: "Your session has expired. Please sign in again."
+      variant: 'destructive',
+      title: 'Session Expired',
+      description: 'Your session has expired. Please sign in again.',
     });
     return false;
   }
@@ -135,11 +139,11 @@ export async function refreshToken(): Promise<boolean> {
     const response = await fetch('/api/auth/refresh', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        refreshToken: currentRefreshToken
-      })
+        refreshToken: currentRefreshToken,
+      }),
     });
 
     if (!response.ok) {
@@ -149,27 +153,32 @@ export async function refreshToken(): Promise<boolean> {
 
     const tokenData = await response.json();
     toast({
-      title: "Session Updated",
-      description: "Your session has been successfully refreshed."
+      title: 'Session Updated',
+      description: 'Your session has been successfully refreshed.',
     });
 
     sessionStorage.setItem('azure_token', tokenData.access_token);
     sessionStorage.setItem('azure_refresh_token', tokenData.refresh_token);
-    sessionStorage.setItem('azure_token_expiry', (Date.now() + (tokenData.expires_in * 1000)).toString());
+    sessionStorage.setItem(
+      'azure_token_expiry',
+      (Date.now() + tokenData.expires_in * 1000).toString()
+    );
 
     return true;
   } catch (error) {
     console.error('Error refreshing token:', error);
     toast({
-      variant: "destructive",
-      title: "Session Refresh Failed",
-      description: error instanceof Error ? error.message : "Failed to refresh your session. Please sign in again."
+      variant: 'destructive',
+      title: 'Session Refresh Failed',
+      description:
+        error instanceof Error
+          ? error.message
+          : 'Failed to refresh your session. Please sign in again.',
     });
     return false;
   }
 }
 
 function generateRandomState(): string {
-  return Math.random().toString(36).substring(2, 15) +
-         Math.random().toString(36).substring(2, 15);
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }

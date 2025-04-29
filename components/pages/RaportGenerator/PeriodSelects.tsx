@@ -1,5 +1,5 @@
-import PeriodDates from '../selectors/PeriodDates';
-import Title from '../Title';
+import PeriodDates from '../../selectors/PeriodDates';
+import Title from '../../Title';
 import PeriodSelectsButtons from './PeriodSelectsButtons';
 
 const PeriodSelects = () => {
@@ -8,7 +8,7 @@ const PeriodSelects = () => {
       <Title text="Okres" />
       <div className="space-y-4 flex flex-col flex-1 justify-between">
         <PeriodDates />
-        <PeriodSelectsButtons />
+        <PeriodSelectsButtons  />
       </div>
     </div>
   );

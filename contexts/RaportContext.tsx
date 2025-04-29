@@ -88,31 +88,11 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
       periodType,
     };
 
-    switch (periodType) {
-      case 'rok':
-        selectedValues.year = year;
-        break;
-      case 'półrocze':
-        selectedValues.year = year;
-        selectedValues.halfYear = halfYear;
-        break;
-      case 'kwartał':
-        selectedValues.year = year;
-        selectedValues.quarter = quarter;
-        break;
-      case 'miesiąc':
-        selectedValues.year = year;
-        selectedValues.month = month;
-        break;
-      case 'konkretne':
-        selectedValues.startDate = startDate;
-        selectedValues.endDate = endDate;
-        break;
-    }
-
-    console.log('Generating report with parameters:', selectedValues);
+    selectedValues.startDate = startDate;
+    selectedValues.endDate = endDate;
     setIsReportGenerated(true);
   };
+
   const value = {
     selectedPorts,
     selectedCommodities,
