@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 export function useAuthCallback() {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
+  const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -25,6 +26,9 @@ export function useAuthCallback() {
 
         const tokenResponse = await exchangeCodeForToken(code, state);
 
+        if (tokenResponse && tokenResponse.access_token) {
+          setIsSuccess(true);
+        }
         if (!tokenResponse) {
           throw new Error('Failed to exchange code for token');
         }
@@ -33,7 +37,6 @@ export function useAuthCallback() {
 
         router.push('/');
       } catch (err) {
-        console.error('Authentication error:', err);
         setError(err instanceof Error ? err.message : 'Unknown authentication error');
       } finally {
         setIsProcessing(false);
@@ -43,7 +46,7 @@ export function useAuthCallback() {
     processAuthCallback();
   }, [searchParams, router]);
 
-  return { isProcessing, error };
+  return { isProcessing, error, isSuccess };
 }
 
 function storeAuthTokens(tokenResponse: {

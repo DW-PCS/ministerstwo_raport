@@ -1,7 +1,6 @@
 'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
 import { loginWithAzure, refreshToken } from '@/lib/auth/authService';
-
+import { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -21,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkToken = () => {
@@ -31,8 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (storedToken && expiryTime && Date.now() < parseInt(expiryTime, 10)) {
         setToken(storedToken);
+        setIsAuthenticated(true);
       } else {
-
         sessionStorage.removeItem('azure_token');
         sessionStorage.removeItem('azure_refresh_token');
         sessionStorage.removeItem('azure_token_expiry');
@@ -43,7 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     checkToken();
-
 
     const intervalId = setInterval(checkToken, 60000);
 
@@ -60,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const authValues = {
-    isAuthenticated: !!token,
+    isAuthenticated,
     token,
     user,
     loading,
@@ -69,13 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshToken,
   };
 
-  return (
-    <AuthContext.Provider value={authValues}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={authValues}>{children}</AuthContext.Provider>;
 }
-
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -83,4 +77,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};

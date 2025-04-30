@@ -1,6 +1,6 @@
+import { toast } from '@/components/ui/use-toast';
 import useRaportContext from '@/contexts/RaportContext';
 import { AppClientsTypes, DspCargoTypeTypes } from '@/lib/types';
-import { redirect } from 'next/navigation';
 import { useState } from 'react';
 
 interface UseReportDataProps {
@@ -74,8 +74,12 @@ const useReportData = ({ ports, commodityGroups }: UseReportDataProps) => {
         }),
       });
 
-      if (response.status === 401 || response.status === 403) {
-        return redirect('/login');
+      if (response.status === 401) {
+        toast({
+          variant: 'destructive',
+          title: 'You mast sign in again.',
+          description: 'Your session has expired. Please sign in again.',
+        });
       }
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);

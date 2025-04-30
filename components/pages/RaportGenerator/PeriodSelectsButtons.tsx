@@ -1,9 +1,6 @@
 import { Button } from '@/components/ui/button';
-import useRaportContext from '@/contexts/RaportContext';
 
 const PeriodSelectsButtons = () => {
-  const { resetFilters } = useRaportContext();
-
   return (
     <div className=" gap-y-2 flex flex-col">
       <Button
@@ -12,8 +9,9 @@ const PeriodSelectsButtons = () => {
       >
         Generuj raport
       </Button>
+      {/* TODO: implement the reset function instead of window.location.reload() */}
       <Button
-        onClick={resetFilters}
+        onClick={() => window.location.reload()}
         className="w-full text-gray-500 hover:text-gray-700 hover:bg-transparent cursor-pointer"
       >
         Resetuj filtry

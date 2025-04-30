@@ -1,5 +1,5 @@
+import { toast } from '@/components/ui/use-toast';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { DspRequestData } from '../types';
 const BASE_URL = 'https://pcscoreapi-h5hvg0dkdxcme7gh.polandcentral-01.azurewebsites.net';
 
@@ -31,8 +31,12 @@ async function fetchApi(
     body: options.body ? JSON.stringify(options.body) : undefined,
     cache: options.cache ? options.cache : 'default',
   });
-  if (response.status === 401 || response.status === 403) {
-    return redirect('/login');
+  if (response.status === 401) {
+    toast({
+      variant: 'destructive',
+      title: 'You mast sign in again',
+      description: 'Your session has expired. Please sign in again.',
+    });
   }
   if (!response.ok) {
     const errorText = await response.text();

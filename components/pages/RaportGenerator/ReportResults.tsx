@@ -1,6 +1,14 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import useRaportContext from '@/contexts/RaportContext';
 import { allCommoditiesMap, COLORS } from '@/lib/constants';
 import { generateChartData } from '@/lib/helpers';
@@ -14,7 +22,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-
 interface ReportResultsProps {
   data: { port: string; kod: string; ilosc: number }[];
 }
@@ -42,7 +49,45 @@ export default function ReportResults({ data }: ReportResultsProps) {
         <div>
           {chartData.length > 0 ? (
             <>
-              <div className="h-80 sm:p-6 bg-white border-b text-xs sm:text-base">
+              <div>
+                {chartData.map(port => {
+                  return (
+                    <div key={port.name} className="border-b last:border-b-0">
+                      <div className="p-4 bg-gray-50">
+                        <h4 className="text-lg font-medium">{port.name}</h4>
+                      </div>
+                      <Table>
+                        <TableBody>
+                          {selectedCommodities.map(commodity => {
+                            return (
+                              <TableRow key={`${port}-${commodity}`} className="hover:bg-gray-50">
+                                <TableCell className="font-medium">
+                                  {allCommoditiesMap[commodity]}
+                                </TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {String(port[allCommoditiesMap[commodity]] || 0) + ' T'}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                        <TableHeader>
+                          <TableRow className="bg-white hover:bg-white">
+                            <TableHead className="w-[60%] font-bold text-gray-600">
+                              Grupa towarowa
+                            </TableHead>
+                            <TableHead className="text-right font-bold text-gray-600">
+                              Wartość
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                      </Table>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="my-10 border-b border "> </div>
+              <div className="h-80 sm:p-6 bg-white border-b border-black/25 text-xs sm:text-base">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}
