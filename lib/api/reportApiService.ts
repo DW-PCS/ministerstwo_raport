@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { DspRequestData } from '../types';
-
 const BASE_URL = 'https://pcscoreapi-h5hvg0dkdxcme7gh.polandcentral-01.azurewebsites.net';
 
 async function fetchApi(
@@ -31,7 +31,9 @@ async function fetchApi(
     body: options.body ? JSON.stringify(options.body) : undefined,
     cache: options.cache ? options.cache : 'default',
   });
-
+  if (response.status === 401 || response.status === 403) {
+    return redirect('/login');
+  }
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`API request failed: ${response.status} - ${errorText}`);
