@@ -1,17 +1,9 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import useRaportContext from '@/contexts/RaportContext';
-import { allCommodities, allCommoditiesMap, COLORS, portData } from '@/lib/constants';
-import { formatNumber, generateChartData } from '@/lib/helpers';
+import { allCommoditiesMap, COLORS } from '@/lib/constants';
+import { generateChartData } from '@/lib/helpers';
 import {
   Bar,
   BarChart,
@@ -77,55 +69,6 @@ export default function ReportResults({ data }: ReportResultsProps) {
                       ))}
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
-
-              <div>
-                {selectedPorts.map(port => (
-                  <div key={port} className="border-b last:border-b-0">
-                    <div className="p-4 bg-gray-50">
-                      <h4 className="text-lg font-medium">{port}</h4>
-                    </div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-white hover:bg-white">
-                          <TableHead className="w-[60%] font-medium text-gray-600">
-                            Grupa towarowa
-                          </TableHead>
-                          <TableHead className="text-right font-medium text-gray-600">
-                            Wartość
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {allCommodities.map(commodity => {
-                          const hasData = portData[port] && portData[port][commodity];
-
-                          if (
-                            !hasData ||
-                            (!selectedCommodities.includes(commodity) &&
-                              !['SUMA (TONY)', 'KONTENERY (TEU)'].includes(commodity))
-                          ) {
-                            return null;
-                          }
-
-                          return (
-                            <TableRow key={`${port}-${commodity}`} className="hover:bg-gray-50">
-                              <TableCell className="font-medium">{commodity}</TableCell>
-                              <TableCell className="text-right font-medium">
-                                {formatNumber(portData[port][commodity].value)}
-                                {portData[port][commodity].secondary && (
-                                  <span className="text-gray-500 ml-2">
-                                    ({formatNumber(portData[port][commodity].secondary)})
-                                  </span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ))}
               </div>
             </>
           ) : (
