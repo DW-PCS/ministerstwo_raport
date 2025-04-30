@@ -77,13 +77,13 @@ const allCommodities = [
 ];
 
 const allCommoditiesMap: Record<string, string> = {
-  C: 'Węgiel',
-  D: 'Ruda',
-  M: 'Zboże',
-  P: 'Drewno',
-  R: 'Drobnica',
-  W: 'Inne masowe',
-  Z: 'Paliwa płynne',
+  W: 'Węgiel',
+  R: 'Ruda',
+  Z: 'Zboże',
+  D: 'Drewno',
+  C: 'Drobnica',
+  M: 'Inne masowe',
+  P: 'Paliwa płynne',
 };
 
 const COLORS = ['#1a0069', '#00edc2', '#ffc658', '#ff8042', '#0088fe', '#00C49F'];
