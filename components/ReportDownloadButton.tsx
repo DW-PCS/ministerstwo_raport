@@ -1,0 +1,55 @@
+'use client';
+
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import useReportDownload, { ReportDataItem } from '@/hooks/useReportDownload';
+import { Download, Loader2 } from 'lucide-react';
+
+interface ReportDownloadButtonProps {
+  data: ReportDataItem[];
+  variant?: 'simple' | 'dropdown';
+  className?: string;
+  startDate?: Date;
+  endDate?: Date;
+}
+
+const ReportDownloadButton = ({ data, startDate, endDate }: ReportDownloadButtonProps) => {
+  const { isDownloadEnabled, downloadReport, isDownloading } = useReportDownload(data);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          disabled={!isDownloadEnabled || isDownloading}
+          className="flex cursor-pointer items-center gap-2 hover:bg-light-gray"
+        >
+          {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+          <span>Pobierz raport</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="bg-white" align="end">
+        <DropdownMenuItem
+          onClick={() => downloadReport('csv', startDate, endDate)}
+          disabled={isDownloading}
+          className="cursor-pointer hover:bg-light-gray"
+        >
+          Pobierz jako CSV
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => downloadReport('xlsx', startDate, endDate)}
+          disabled={isDownloading}
+          className="cursor-pointer hover:bg-light-gray"
+        >
+          Pobierz jako Excel
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+export default ReportDownloadButton;

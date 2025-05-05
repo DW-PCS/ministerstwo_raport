@@ -1,5 +1,6 @@
 'use client';
 
+import ReportDownloadButton from '@/components/ReportDownloadButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -27,23 +28,37 @@ interface ReportResultsProps {
 }
 
 export default function ReportResults({ data }: ReportResultsProps) {
-  const { selectedCommodities, selectedPorts } = useRaportContext();
+  const { submittedCommodities, submittedPorts, isReportGenerated, startDate, endDate } =
+    useRaportContext();
 
-  const mappedCommodities = selectedCommodities.map(commodity => allCommoditiesMap[commodity]);
+  const mappedCommodities = submittedCommodities.map(commodity => allCommoditiesMap[commodity]);
 
   const chartData = generateChartData({
-    ports: selectedPorts,
+    ports: submittedPorts,
     commodities: mappedCommodities,
     data,
-    selectedCommodities,
+    selectedCommodities: submittedCommodities,
   });
   const commodityKeys =
     chartData.length >= 1 ? Object.keys(chartData[0]).filter(key => key !== 'name') : [];
+
+  if (!isReportGenerated || !data || data.length === 0) {
+    return (
+      <Card className="shadow-lg rounded-2xl overflow-hidden border-0">
+        <CardContent className="p-6">
+          <div className="text-center py-10 text-muted-foreground">
+            Wybierz co najmniej jeden port i jedną grupę towarową, aby wygenerować raport
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-lg rounded-2xl overflow-hidden border-0">
       <CardHeader className="border-b bg-white flex flex-col sm:flex-row justify-between items-center">
         <CardTitle className="text-xl font-semibold">Szczegółowe dane</CardTitle>
+        <ReportDownloadButton data={chartData} startDate={startDate} endDate={endDate} />
       </CardHeader>
       <CardContent className="p-0">
         <div>
@@ -58,9 +73,12 @@ export default function ReportResults({ data }: ReportResultsProps) {
                       </div>
                       <Table>
                         <TableBody>
-                          {selectedCommodities.map(commodity => {
+                          {submittedCommodities.map(commodity => {
                             return (
-                              <TableRow key={`${port}-${commodity}`} className="hover:bg-gray-50">
+                              <TableRow
+                                key={`${port.name}-${commodity}`}
+                                className="hover:bg-gray-50"
+                              >
                                 <TableCell className="font-medium">
                                   {allCommoditiesMap[commodity]}
                                 </TableCell>
@@ -118,7 +136,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
             </>
           ) : (
             <div className="text-center py-10 text-muted-foreground">
-              Wybierz co najmniej jeden port i jedną grupę towarową, aby wygenerować raport
+              Brak danych do wyświetlenia. Spróbuj zmienić kryteria wyszukiwania.
             </div>
           )}
         </div>

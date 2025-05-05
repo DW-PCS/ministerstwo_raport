@@ -14,6 +14,8 @@ type RaportContextType = {
   halfYear: halfYearType;
   year: string;
   isReportGenerated: boolean;
+  submittedPorts: string[];
+  submittedCommodities: string[];
   handlePortChange: (port: string, checked: boolean) => void;
   handleCommodityChange: (commodity: string, checked: boolean) => void;
   setPeriodType: (type: periodType) => void;
@@ -41,6 +43,9 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
   const [year, setYear] = useState<string>('2024');
   const [isReportGenerated, setIsReportGenerated] = useState(false);
 
+  const [submittedPorts, setSubmittedPorts] = useState<string[]>([]);
+  const [submittedCommodities, setSubmittedCommodities] = useState<string[]>([]);
+
   const handlePortChange = (port: string, checked: boolean) => {
     if (checked) {
       setSelectedPorts([...selectedPorts, port]);
@@ -64,6 +69,8 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const generateReport = () => {
+    setSubmittedPorts([...selectedPorts]);
+    setSubmittedCommodities([...selectedCommodities]);
     setIsReportGenerated(true);
   };
 
@@ -78,6 +85,8 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
     halfYear,
     year,
     isReportGenerated,
+    submittedPorts,
+    submittedCommodities,
     handlePortChange,
     handleCommodityChange,
     setPeriodType,

@@ -12,6 +12,7 @@ const useReportData = ({ ports, commodityGroups }: UseReportDataProps) => {
   const { selectedCommodities, selectedPorts } = useRaportContext();
 
   const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const dataPorts = ports.filter(
     (port: AppClientsTypes) => selectedPorts.includes(port.city) && port.enabled
@@ -33,6 +34,8 @@ const useReportData = ({ ports, commodityGroups }: UseReportDataProps) => {
 
   async function fetchProductGroupData(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setIsLoading(true);
+
     const apiUrl = 'ReportMI/VproductGroup';
     const token = getTokenFromSession();
 
@@ -77,10 +80,13 @@ const useReportData = ({ ports, commodityGroups }: UseReportDataProps) => {
       if (response.status === 401) {
         toast({
           variant: 'destructive',
-          title: 'You mast sign in again.',
+          title: 'You must sign in again.',
           description: 'Your session has expired. Please sign in again.',
         });
+        setIsLoading(false);
+        return null;
       }
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -90,11 +96,17 @@ const useReportData = ({ ports, commodityGroups }: UseReportDataProps) => {
       setData(data);
       return data;
     } catch (error) {
-      console.error('Error fetching product group data:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error fetching data',
+        description: `An error occurred while fetching the report data. Please try again. ${error}`,
+      });
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   }
-  return { data, fetchProductGroupData, getTokenFromSession };
+  return { data, isLoading, fetchProductGroupData, getTokenFromSession };
 };
 
 export default useReportData;

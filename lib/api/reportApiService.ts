@@ -1,4 +1,3 @@
-import { toast } from '@/components/ui/use-toast';
 import { cookies } from 'next/headers';
 import { DspRequestData } from '../types';
 const BASE_URL = 'https://pcscoreapi-h5hvg0dkdxcme7gh.polandcentral-01.azurewebsites.net';
@@ -32,12 +31,18 @@ async function fetchApi(
     cache: options.cache ? options.cache : 'default',
   });
   if (response.status === 401) {
-    toast({
-      variant: 'destructive',
-      title: 'You mast sign in again',
-      description: 'Your session has expired. Please sign in again.',
-    });
+    return {
+      status: 401,
+      message: 'Unauthorized access. Please log in again.',
+    };
   }
+  if (response.status === 403) {
+    return {
+      status: 403,
+      message: 'Forbidden access. You do not have permission to access this resource.',
+    };
+  }
+
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`API request failed: ${response.status} - ${errorText}`);
