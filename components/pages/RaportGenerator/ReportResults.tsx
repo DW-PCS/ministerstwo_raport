@@ -44,7 +44,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
 
   if (!isReportGenerated || !data || data.length === 0) {
     return (
-      <Card className="shadow-lg rounded-2xl overflow-hidden border-0">
+      <Card className="shadow-lg rounded-2xl overflow-hidden border-0 bg-white">
         <CardContent className="p-6">
           <div className="text-center py-10 text-muted-foreground">
             Wybierz co najmniej jeden port i jedną grupę towarową, aby wygenerować raport
@@ -56,18 +56,18 @@ export default function ReportResults({ data }: ReportResultsProps) {
 
   return (
     <Card className="shadow-lg rounded-2xl overflow-hidden border-0">
-      <CardHeader className="border-b bg-white flex flex-col sm:flex-row justify-between items-center">
+      <CardHeader className="border-b bg-white flex flex-col sm:flex-row justify-between items-center border-black/10">
         <CardTitle className="text-xl font-semibold">Szczegółowe dane</CardTitle>
         <ReportDownloadButton data={chartData} startDate={startDate} endDate={endDate} />
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 bg-white">
         <div>
           {chartData.length > 0 ? (
             <>
               <div>
                 {chartData.map(port => {
                   return (
-                    <div key={port.name} className="border-b last:border-b-0">
+                    <div key={port.name} className="border-b last:border-b-0 border-black/10">
                       <div className="p-4 bg-gray-50">
                         <h4 className="text-lg font-medium">{port.name}</h4>
                       </div>
@@ -77,7 +77,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                             return (
                               <TableRow
                                 key={`${port.name}-${commodity}`}
-                                className="hover:bg-gray-50"
+                                className="hover:bg-gray-50 border-black/10"
                               >
                                 <TableCell className="font-medium">
                                   {allCommoditiesMap[commodity]}
@@ -90,7 +90,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                           })}
                         </TableBody>
                         <TableHeader>
-                          <TableRow className="bg-white hover:bg-white">
+                          <TableRow className="bg-white hover:bg-white border-black/10">
                             <TableHead className="w-[60%] font-bold text-gray-600">
                               Grupa towarowa
                             </TableHead>
@@ -104,8 +104,8 @@ export default function ReportResults({ data }: ReportResultsProps) {
                   );
                 })}
               </div>
-              <div className="my-10 border-b border "> </div>
-              <div className="h-80 sm:p-6 bg-white border-b border-black/25 text-xs sm:text-base">
+              <div className="my-10 border-b border border-black/10"> </div>
+              <div className="h-80 sm:p-6 bg-white border-b border-black/10 text-xs sm:text-base">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}
