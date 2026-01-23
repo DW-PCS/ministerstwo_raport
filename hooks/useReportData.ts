@@ -2,13 +2,7 @@
 
 import useRaportContext from '@/contexts/RaportContext';
 import { portData } from '@/lib/constants';
-import { AppClientsTypes, DspCargoTypeTypes } from '@/lib/types';
 import { useState } from 'react';
-
-interface UseReportDataProps {
-  ports: AppClientsTypes[];
-  commodityGroups: DspCargoTypeTypes[];
-}
 
 type ReportRow = {
   port: string;
@@ -16,7 +10,7 @@ type ReportRow = {
   ilosc: number;
 };
 
-const useReportData = ({ ports, commodityGroups }: UseReportDataProps) => {
+const useReportData = () => {
   const { selectedPorts, selectedCommodities } = useRaportContext();
 
   const [data, setData] = useState<ReportRow[]>([]);
