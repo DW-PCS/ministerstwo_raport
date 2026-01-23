@@ -1,11 +1,10 @@
 'use client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAuthCallback } from '@/hooks/useAuthCallback';
+// import { useAuthCallback } from '@/hooks/useAuthCallback';
 import Image from 'next/image';
 
 const Header = () => {
-  const { login, logout, isAuthenticated } = useAuth();
-  const { isSuccess } = useAuthCallback();
+  // const { login, logout, isAuthenticated } = useAuth();
+  // const { isSuccess } = useAuthCallback();
 
   return (
     <header className="max-w-5xl mx-auto bg-[#1a0069] text-white p-4 rounded-[25px] shadow-lg mt-4">
@@ -21,11 +20,7 @@ const Header = () => {
           <h1 className="text-[18px] font-bold ml-4">Generator Raportów</h1>
         </div>
         <div className="flex items-center">
-          {isSuccess || isAuthenticated ? (
-            <AuthButton callback={logout} text="Wyloguj" />
-          ) : (
-            <AuthButton callback={login} text="Zaloguj" />
-          )}
+          <AuthButton callback={() => {}} text="Zaloguj" />
         </div>
       </div>
     </header>
