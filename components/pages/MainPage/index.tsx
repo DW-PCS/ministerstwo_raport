@@ -14,7 +14,7 @@ const MainPage = ({ ports, groups, commodityGroups }: MainPageProps) => {
   const { fetchProductGroupData, data, isLoading } = useReportData({ ports, commodityGroups });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    await fetchProductGroupData(e); // 🔥 THIS WAS MISSING
+    await fetchProductGroupData(e); 
     generateReport();
   };
 console.log(data, 'data');
