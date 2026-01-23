@@ -79,11 +79,9 @@ export default function ReportResults({ data }: ReportResultsProps) {
                                 key={`${port.name}-${commodity}`}
                                 className="hover:bg-gray-50 border-black/10"
                               >
-                                <TableCell className="font-medium">
-                                  {allCommoditiesMap[commodity]}
-                                </TableCell>
+                                <TableCell className="font-medium">{commodity}</TableCell>
                                 <TableCell className="text-right font-medium">
-                                  {String(port[allCommoditiesMap[commodity]] || 0) + ' T'}
+                                  {String(port[commodity] || 0) + ' T'}
                                 </TableCell>
                               </TableRow>
                             );

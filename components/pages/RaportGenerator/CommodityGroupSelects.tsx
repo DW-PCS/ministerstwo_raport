@@ -1,7 +1,6 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import useRaportContext from '@/contexts/RaportContext';
-import { allCommoditiesMap } from '@/lib/constants';
 import Title from '../../Title';
 
 const CommodityGroupSelects = ({ groups }: { groups: string[] }) => {
@@ -22,7 +21,7 @@ const CommodityGroupSelects = ({ groups }: { groups: string[] }) => {
                 className="border-gray-400 data-[state=checked]:bg-black text-white data-[state=checked]:border-black"
               />
               <Label htmlFor={`commodity-${commodity}`} className="text-base">
-                {allCommoditiesMap[commodity]}
+                {commodity}
               </Label>
             </div>
           ))}

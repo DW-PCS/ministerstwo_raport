@@ -10,6 +10,7 @@ interface PortSelectsProps {
 
 const PortSelects = ({ ports }: PortSelectsProps) => {
   const { selectedPorts, handlePortChange } = useRaportContext();
+
   return (
     <div className="space-y-4">
       <Title text="Porty" />
