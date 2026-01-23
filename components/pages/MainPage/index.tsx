@@ -2,22 +2,22 @@
 import RaportGenerator from '@/components/pages/RaportGenerator';
 import useRaportContext from '@/contexts/RaportContext';
 import useReportData from '@/hooks/useReportData';
-import { AppClientsTypes, DspCargoTypeTypes } from '@/lib/types';
+import { AppClientsTypes } from '@/lib/types';
 
 interface MainPageProps {
   ports: AppClientsTypes[];
   groups: string[];
-  commodityGroups: DspCargoTypeTypes[];
 }
-const MainPage = ({ ports, groups, commodityGroups }: MainPageProps) => {
+
+const MainPage = ({ ports, groups }: MainPageProps) => {
   const { generateReport } = useRaportContext();
-  const { fetchProductGroupData, data, isLoading } = useReportData({ ports, commodityGroups });
+  const { fetchProductGroupData, data, isLoading } = useReportData();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    await fetchProductGroupData(e); 
+    await fetchProductGroupData(e);
     generateReport();
   };
-console.log(data, 'data');
+  console.log(data, 'data');
   return (
     <form onSubmit={handleSubmit} className="max-w-5xl m-auto mt-14">
       <RaportGenerator data={data} ports={ports} groups={groups} isLoading={isLoading} />
