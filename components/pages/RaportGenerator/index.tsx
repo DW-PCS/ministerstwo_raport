@@ -15,7 +15,7 @@ interface ReportGeneratorProps {
   onReset: () => void;
 }
 
-export default function ReportGenerator({
+export default function RaportGenerator({
   ports,
   groups,
   data,

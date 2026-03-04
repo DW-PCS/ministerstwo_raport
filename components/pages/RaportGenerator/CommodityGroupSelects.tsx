@@ -1,7 +1,7 @@
-import { Tooltip } from 'antd';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import useRaportContext from '@/contexts/RaportContext';
+import { Tooltip } from 'antd';
 import Title from '../../Title';
 
 const CommodityGroupSelects = ({ groups }: { groups: string[] }) => {

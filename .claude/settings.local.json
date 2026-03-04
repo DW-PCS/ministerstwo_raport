@@ -5,7 +5,9 @@
       "Bash(npm install -D tailwindcss@latest @tailwindcss/postcss@latest)",
       "Bash(npm install next@latest)",
       "Bash(node -e \"const pkg = require\\(''./package.json''\\); console.log\\(''next:'', pkg.dependencies.next\\)\")",
-      "Bash(node -e \"const pkg = require\\(''./package.json''\\); console.log\\(''next:'', pkg.dependencies.next, ''\\\\ntailwindcss:'', pkg.devDependencies.tailwindcss, ''\\\\n@tailwindcss/postcss:'', pkg.devDependencies[''@tailwindcss/postcss'']\\)\")"
+      "Bash(node -e \"const pkg = require\\(''./package.json''\\); console.log\\(''next:'', pkg.dependencies.next, ''\\\\ntailwindcss:'', pkg.devDependencies.tailwindcss, ''\\\\n@tailwindcss/postcss:'', pkg.devDependencies[''@tailwindcss/postcss'']\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(node -e \"const d = require\\(''docx''\\); console.log\\(Object.keys\\(d\\)\\)\")"
     ]
   }
 }
