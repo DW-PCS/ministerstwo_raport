@@ -1,6 +1,5 @@
 "use client"
 
-
 import {
   Toast,
   ToastClose,
@@ -9,7 +8,7 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
-import { useToast } from "./use-toast"
+import { useToast, TOAST_DURATION } from "./use-toast"
 
 export function Toaster() {
   const { toasts } = useToast()
@@ -19,7 +18,7 @@ export function Toaster() {
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>
-            <div className="grid gap-1">
+            <div className="grid gap-1 w-full">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
                 <ToastDescription>{description}</ToastDescription>
@@ -27,6 +26,10 @@ export function Toaster() {
             </div>
             {action}
             <ToastClose />
+            <span
+              className="absolute bottom-0 left-0 h-1 bg-foreground/20 rounded-full"
+              style={{ animation: `toast-progress ${TOAST_DURATION}ms linear forwards` }}
+            />
           </Toast>
         )
       })}

@@ -57,7 +57,14 @@ export default function ReportResults({ data }: ReportResultsProps) {
   return (
     <Card className="shadow-lg rounded-2xl overflow-hidden border-0">
       <CardHeader className="border-b bg-white flex flex-col sm:flex-row justify-between items-center border-black/10">
-        <CardTitle className="text-xl font-semibold">Szczegółowe dane</CardTitle>
+        <div>
+          <CardTitle className="text-xl font-semibold">Szczegółowe dane</CardTitle>
+          {startDate && endDate && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Okres: {startDate.toLocaleDateString('pl-PL')} – {endDate.toLocaleDateString('pl-PL')}
+            </p>
+          )}
+        </div>
         <ReportDownloadButton data={chartData} startDate={startDate} endDate={endDate} />
       </CardHeader>
       <CardContent className="p-0 bg-white">

@@ -1,5 +1,6 @@
 'use client';
 import RaportGenerator from '@/components/pages/RaportGenerator';
+import { toast } from '@/components/ui/use-toast';
 import useRaportContext from '@/contexts/RaportContext';
 import useReportData from '@/hooks/useReportData';
 import { AppClientsTypes } from '@/lib/types';
@@ -16,6 +17,7 @@ const MainPage = ({ ports, groups }: MainPageProps) => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     await fetchProductGroupData(e);
     generateReport();
+    toast({ title: 'Raport wygenerowany', description: 'Dane zostały załadowane pomyślnie.' });
   };
   console.log(data, 'data');
   return (

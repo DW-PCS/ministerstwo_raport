@@ -41,11 +41,18 @@ const ReportDownloadButton = ({ data, startDate, endDate }: ReportDownloadButton
           Pobierz jako CSV
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => downloadReport('xlsx', startDate, endDate)}
+          onClick={() => downloadReport('pdf', startDate, endDate)}
           disabled={isDownloading}
           className="cursor-pointer hover:bg-light-gray"
         >
-          Pobierz jako Excel
+          Pobierz jako PDF
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => downloadReport('docx', startDate, endDate)}
+          disabled={isDownloading}
+          className="cursor-pointer hover:bg-light-gray"
+        >
+          Pobierz jako Word
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
