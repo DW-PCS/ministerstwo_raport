@@ -1,9 +1,13 @@
-import AuthCallback from './AuthCallback'
+import LoadingState from '@/components/auth/LoadingState';
+import { Suspense } from 'react';
+import AuthCallback from './AuthCallback';
 
 const Page = () => {
   return (
-    <AuthCallback />
-  )
-}
+    <Suspense fallback={<LoadingState />}>
+      <AuthCallback />
+    </Suspense>
+  );
+};
 
-export default Page
+export default Page;

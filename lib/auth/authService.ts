@@ -1,7 +1,8 @@
 'use client';
 
-import { toast } from '@/components/ui/use-toast';
-import { base64UrlEncode, generateCodeVerifier, getAppOrigin } from '../helpers';
+import { getAuthCookieSession, setAuthCookies } from '@/actions/authCookies';
+import { base64UrlEncode, generateCodeVerifier, getAppOrigin } from '@/lib/helpers';
+import { toast } from 'sonner';
 
 const config = {
   clientId: process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID,
@@ -33,7 +34,7 @@ export async function loginWithAzure(): Promise<void> {
 
     const authUrl = new URL(`${config.authority}/oauth2/v2.0/authorize`);
     if (!config.clientId) {
-      throw new Error('Azure AD Client ID is not defined');
+      throw new Error('Nie zdefiniowano identyfikatora klienta Azure AD');
     }
     authUrl.searchParams.append('client_id', config.clientId);
     authUrl.searchParams.append('response_type', 'code');
@@ -46,12 +47,10 @@ export async function loginWithAzure(): Promise<void> {
 
     window.location.href = authUrl.toString();
   } catch (error) {
-    console.error('Login initialization error:', error);
-    toast({
-      variant: 'destructive',
-      title: 'Authentication Error',
-      description: error instanceof Error ? error.message : 'Failed to initialize login process',
-    });
+    console.error('Błąd inicjalizacji logowania:', error);
+    toast.error(
+      error instanceof Error ? error.message : 'Nie udało się zainicjalizować procesu logowania'
+    );
   }
 }
 
@@ -69,12 +68,12 @@ export async function exchangeCodeForToken(
   try {
     const savedState: string | null = sessionStorage.getItem('auth_state');
     if (state !== savedState) {
-      throw new Error('State mismatch - possible CSRF attack');
+      throw new Error('Niezgodność parametru state - możliwy atak CSRF');
     }
 
     const codeVerifier: string | null = sessionStorage.getItem('code_verifier');
     if (!codeVerifier) {
-      throw new Error('Code verifier not found');
+      throw new Error('Nie znaleziono code verifier');
     }
 
     const response: Response = await fetch('/api/auth/token', {
@@ -91,11 +90,8 @@ export async function exchangeCodeForToken(
     if (!response.ok) {
       const errorData = await response.json();
       const errorMessage =
-        errorData.error || `Failed to exchange code for token (${response.status})`;
-      toast({
-        title: `Failed to exchange code for token (${response.status})`,
-        description: errorMessage,
-      });
+        errorData.error || `Nie udało się wymienić kodu na token (${response.status})`;
+      toast.error(errorMessage);
 
       throw new Error(errorMessage);
     }
@@ -104,20 +100,14 @@ export async function exchangeCodeForToken(
     sessionStorage.removeItem('auth_state');
 
     const tokenData = (await response.json()) as TokenResponse;
-    toast({
-      title: 'Authentication Successful',
-      description: 'You have successfully signed in.',
-    });
+    toast.success('Zalogowano pomyślnie.');
 
     return tokenData;
   } catch (error) {
-    console.error('Error exchanging code for token:', error);
-    toast({
-      variant: 'destructive',
-      title: 'Authentication Failed',
-      description:
-        error instanceof Error ? error.message : 'Failed to complete the authentication process',
-    });
+    console.error('Błąd podczas wymiany kodu na token:', error);
+    toast.error(
+      error instanceof Error ? error.message : 'Nie udało się zakończyć procesu uwierzytelniania'
+    );
     return null;
   }
 }
@@ -125,13 +115,10 @@ export async function exchangeCodeForToken(
 export async function refreshToken(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
 
-  const currentRefreshToken = sessionStorage.getItem('azure_refresh_token');
+  const cookieSession = await getAuthCookieSession();
+  const currentRefreshToken = cookieSession.refreshToken;
   if (!currentRefreshToken) {
-    toast({
-      variant: 'destructive',
-      title: 'Session Expired',
-      description: 'Your session has expired. Please sign in again.',
-    });
+    toast.error('Twoja sesja wygasła. Zaloguj się ponownie.');
     return false;
   }
 
@@ -148,33 +135,29 @@ export async function refreshToken(): Promise<boolean> {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || `Token refresh failed (${response.status})`);
+      throw new Error(
+        errorData.error || `Odświeżenie tokenu nie powiodło się (${response.status})`
+      );
     }
 
     const tokenData = await response.json();
-    toast({
-      title: 'Session Updated',
-      description: 'Your session has been successfully refreshed.',
-    });
 
-    sessionStorage.setItem('azure_token', tokenData.access_token);
-    sessionStorage.setItem('azure_refresh_token', tokenData.refresh_token);
-    sessionStorage.setItem(
-      'azure_token_expiry',
-      (Date.now() + tokenData.expires_in * 1000).toString()
-    );
+    toast.success('Sesja została pomyślnie odświeżona.');
+
+    await setAuthCookies({
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      expiresIn: tokenData.expires_in,
+    });
 
     return true;
   } catch (error) {
-    console.error('Error refreshing token:', error);
-    toast({
-      variant: 'destructive',
-      title: 'Session Refresh Failed',
-      description:
-        error instanceof Error
-          ? error.message
-          : 'Failed to refresh your session. Please sign in again.',
-    });
+    console.error('Błąd odświeżania tokenu:', error);
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : 'Nie udało się odświeżyć sesji. Zaloguj się ponownie.'
+    );
     return false;
   }
 }

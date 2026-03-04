@@ -1,11 +1,13 @@
 'use client';
+import { clearAuthCookies, getAuthCookieSession } from '@/actions/authCookies';
 import { loginWithAzure, refreshToken } from '@/lib/auth/authService';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { AuthUserPayload } from '@/lib/types';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   token: string | null;
-  user: unknown;
+  user: AuthUserPayload | null;
   loading: boolean;
   login: () => void;
   logout: () => void;
@@ -14,47 +16,49 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-import { ReactNode } from 'react';
+type AuthProviderProps = {
+  children: ReactNode;
+  initialToken: string | null;
+  initialUser: AuthUserPayload | null;
+};
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export function AuthProvider({ children, initialToken, initialUser }: AuthProviderProps) {
+  const [token, setToken] = useState<string | null>(initialToken);
+  const [user, setUser] = useState<AuthUserPayload | null>(initialUser);
+  const loading = false;
+  const [isAuthenticated, setIsAuthenticated] = useState(!!initialToken);
 
   useEffect(() => {
-    const checkToken = () => {
+    const checkToken = async () => {
       if (typeof window === 'undefined') return;
 
-      const storedToken = sessionStorage.getItem('azure_token');
-      const expiryTime = sessionStorage.getItem('azure_token_expiry');
+      const cookieSession = await getAuthCookieSession();
+      const storedToken = cookieSession.token;
+      const expiryTime = cookieSession.expiryTime;
 
       if (storedToken && expiryTime && Date.now() < parseInt(expiryTime, 10)) {
         setToken(storedToken);
         setIsAuthenticated(true);
       } else {
-        sessionStorage.removeItem('azure_token');
-        sessionStorage.removeItem('azure_refresh_token');
-        sessionStorage.removeItem('azure_token_expiry');
+        await clearAuthCookies();
         setToken(null);
         setUser(null);
+        setIsAuthenticated(false);
       }
-      setLoading(false);
     };
 
-    checkToken();
-
-    const intervalId = setInterval(checkToken, 60000);
+    const intervalId = setInterval(() => {
+      void checkToken();
+    }, 60000);
 
     return () => clearInterval(intervalId);
   }, []);
 
-  const logout = () => {
-    sessionStorage.removeItem('azure_token');
-    sessionStorage.removeItem('azure_refresh_token');
-    sessionStorage.removeItem('azure_token_expiry');
+  const logout = async () => {
+    await clearAuthCookies();
     setToken(null);
     setUser(null);
+    setIsAuthenticated(false);
     window.location.href = '/';
   };
 

@@ -12,6 +12,7 @@ interface ReportGeneratorProps {
   groups: string[];
   data: { port: string; kod: string; ilosc: number }[];
   isLoading?: boolean;
+  onReset: () => void;
 }
 
 export default function ReportGenerator({
@@ -19,6 +20,7 @@ export default function ReportGenerator({
   groups,
   data,
   isLoading = false,
+  onReset,
 }: ReportGeneratorProps) {
   return (
     <div className="space-y-8 max-w-96 m-auto sm:max-w-5xl w-full ">
@@ -26,7 +28,7 @@ export default function ReportGenerator({
         <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8 min-h-[433px]">
           <PortSelects ports={ports} />
           <CommodityGroupSelects groups={groups} />
-          <PeriodSelects isLoading={isLoading} />
+          <PeriodSelects isLoading={isLoading} onReset={onReset} />
         </CardContent>
       </Card>
       <ReportResults data={data} />

@@ -30,3 +30,9 @@ export interface DspRequestData {
   periodType: string;
   period: DspPeriodTypes;
 }
+
+export interface AuthUserPayload {
+  name?: string;
+  preferred_username?: string;
+  [key: string]: unknown;
+}

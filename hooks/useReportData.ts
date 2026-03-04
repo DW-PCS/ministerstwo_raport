@@ -43,7 +43,6 @@ const useReportData = () => {
     setIsLoading(true);
 
     try {
-      // simulate backend latency
       await new Promise(resolve => setTimeout(resolve, 700));
 
       const result = buildMockReportData();
@@ -55,10 +54,15 @@ const useReportData = () => {
     }
   }
 
+  function resetData() {
+    setData([]);
+  }
+
   return {
     data,
     isLoading,
     fetchProductGroupData,
+    resetData,
   };
 };
 

@@ -1,3 +1,4 @@
+import AuthRequiredToast from '@/components/auth/AuthRequiredToast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,8 +34,7 @@ export default function Home() {
     {
       id: 'ship-capacity',
       title: 'Raport pojemności statków netto',
-      description:
-        'Zestawienie pojemności netto statków zawijających do portów w wybranym okresie',
+      description: 'Zestawienie pojemności netto statków zawijających do portów w wybranym okresie',
       href: '/reports/srodki-transportu',
       status: 'W przygotowaniu',
       available: false,
@@ -43,6 +43,7 @@ export default function Home() {
 
   return (
     <main className="max-w-5xl m-auto mt-14 px-4">
+      <AuthRequiredToast />
       <section className="space-y-2 mb-8">
         <h2 className="text-2xl font-semibold tracking-tight">Typy raportów</h2>
         <p className="text-sm text-muted-foreground">

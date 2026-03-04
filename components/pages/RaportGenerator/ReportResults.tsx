@@ -13,13 +13,14 @@ import {
 import useRaportContext from '@/contexts/RaportContext';
 import { allCommoditiesMap, COLORS } from '@/lib/constants';
 import { generateChartData } from '@/lib/helpers';
+import { Tooltip as AntdTooltip } from 'antd';
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Legend,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
@@ -76,7 +77,9 @@ export default function ReportResults({ data }: ReportResultsProps) {
                   return (
                     <div key={port.name} className="border-b last:border-b-0 border-black/10">
                       <div className="p-4 bg-gray-50">
-                        <h4 className="text-lg font-medium">{port.name}</h4>
+                        <AntdTooltip title={String(port.name)}>
+                          <h4 className="text-lg font-medium truncate">{port.name}</h4>
+                        </AntdTooltip>
                       </div>
                       <Table>
                         <TableBody>
@@ -86,9 +89,17 @@ export default function ReportResults({ data }: ReportResultsProps) {
                                 key={`${port.name}-${commodity}`}
                                 className="hover:bg-gray-50 border-black/10"
                               >
-                                <TableCell className="font-medium">{commodity}</TableCell>
+                                <TableCell className="font-medium">
+                                  <AntdTooltip title={commodity}>
+                                    <span className="inline-block max-w-[280px] truncate align-bottom">
+                                      {commodity}
+                                    </span>
+                                  </AntdTooltip>
+                                </TableCell>
                                 <TableCell className="text-right font-medium">
-                                  {String(port[commodity] || 0) + ' T'}
+                                  <AntdTooltip title={String(port[commodity] || 0) + ' T'}>
+                                    <span>{String(port[commodity] || 0) + ' T'}</span>
+                                  </AntdTooltip>
                                 </TableCell>
                               </TableRow>
                             );
@@ -124,7 +135,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip />
+                    <RechartsTooltip />
                     <Legend />
                     {commodityKeys
                       .filter(key => chartData[0][key] !== undefined)

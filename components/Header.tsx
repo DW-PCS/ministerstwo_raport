@@ -1,10 +1,13 @@
 'use client';
-// import { useAuthCallback } from '@/hooks/useAuthCallback';
+import { useAuth } from '@/contexts/AuthContext';
+import { normalizePolishText } from '@/lib/helpers';
 import Image from 'next/image';
 
 const Header = () => {
-  // const { login, logout, isAuthenticated } = useAuth();
-  // const { isSuccess } = useAuthCallback();
+  const { login, logout, isAuthenticated, user } = useAuth();
+
+  const displayName = normalizePolishText(user?.name || user?.preferred_username || 'Użytkowniku');
+  const userEmail = user?.preferred_username;
 
   return (
     <header className="max-w-5xl mx-auto bg-[#1a0069] text-white p-4 rounded-[25px] shadow-lg mt-4">
@@ -19,8 +22,19 @@ const Header = () => {
           />
           <h1 className="text-[18px] font-bold ml-4">Generator Raportów</h1>
         </div>
-        <div className="flex items-center">
-          <AuthButton callback={() => {}} text="Zaloguj" />
+        <div className="flex items-center gap-4">
+          {isAuthenticated && (
+            <div className="text-right leading-tight">
+              <p className="text-xs">Witaj, {displayName}</p>
+              {userEmail && (
+                <p className="text-[11px] text-white/80">Zalogowano jako: {userEmail}</p>
+              )}
+            </div>
+          )}
+          <AuthButton
+            callback={isAuthenticated ? logout : login}
+            text={isAuthenticated ? 'Wyloguj' : 'Zaloguj'}
+          />
         </div>
       </div>
     </header>

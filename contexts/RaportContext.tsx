@@ -48,23 +48,34 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
 
   const handlePortChange = (port: string, checked: boolean) => {
     if (checked) {
-      setSelectedPorts([...selectedPorts, port]);
+      setSelectedPorts(previous => (previous.includes(port) ? previous : [...previous, port]));
     } else {
-      setSelectedPorts(selectedPorts.filter(p => p !== port));
+      setSelectedPorts(previous => previous.filter(p => p !== port));
     }
   };
 
   const handleCommodityChange = (commodity: string, checked: boolean) => {
     if (checked) {
-      setSelectedCommodities([...selectedCommodities, commodity]);
+      setSelectedCommodities(previous =>
+        previous.includes(commodity) ? previous : [...previous, commodity]
+      );
     } else {
-      setSelectedCommodities(selectedCommodities.filter(c => c !== commodity));
+      setSelectedCommodities(previous => previous.filter(c => c !== commodity));
     }
   };
 
   const resetFilters = () => {
+    setSelectedPorts([]);
+    setSelectedCommodities([]);
+    setPeriodType('konkretne');
     setStartDate(undefined);
     setEndDate(undefined);
+    setMonth('styczeń');
+    setQuarter('I_kwrtał');
+    setHalfYear('I półrocze');
+    setYear('2024');
+    setSubmittedPorts([]);
+    setSubmittedCommodities([]);
     setIsReportGenerated(false);
   };
 
