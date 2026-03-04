@@ -1,19 +1,18 @@
 'use client';
 
-import ErrorState from '@/components/auth/ErrorState';
-import LoadingState from '@/components/auth/LoadingState';
 import SuccessState from '@/components/auth/SuccessState';
 import { useAuthCallback } from '@/hooks/useAuthCallback';
+import { Spin } from 'antd';
 
 export default function AuthCallback() {
   const { isProcessing, error } = useAuthCallback();
 
-  if (isProcessing) {
-    return <LoadingState />;
-  }
-
-  if (error) {
-    return <ErrorState error={error} />;
+  if (error || isProcessing) {
+    return (
+      <div className="h-screen flex justify-center items-center">
+        <Spin size="large" />;
+      </div>
+    );
   }
 
   return <SuccessState />;
