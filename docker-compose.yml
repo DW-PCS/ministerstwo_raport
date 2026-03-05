@@ -1,0 +1,9 @@
+services:
+  app:
+    image: thewicha/ministerstwo-app:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}

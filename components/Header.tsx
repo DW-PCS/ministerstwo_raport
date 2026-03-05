@@ -22,7 +22,7 @@ const Header = () => {
           />
           <h1 className="text-[18px] font-bold ml-4">Generator Raportów</h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4">   
           {isAuthenticated && (
             <div className="text-right leading-tight">
               <p className="text-xs">Witaj, {displayName}</p>

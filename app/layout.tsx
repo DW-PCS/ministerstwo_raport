@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Report system',
+  title: 'Generator Raportów',
 };
 
 export default async function RootLayout({

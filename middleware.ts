@@ -2,7 +2,7 @@ import { getTokenRemainingSeconds, isValidToken } from '@/lib/token';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const token = request.cookies.get('azure_token')?.value;
   const { pathname } = request.nextUrl;
   const remainingSeconds = token ? getTokenRemainingSeconds(token) : null;
