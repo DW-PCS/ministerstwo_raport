@@ -7,16 +7,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { commodityGroups } from '@/lib/constants';
-import { AppClientsTypes } from '@/lib/types';
+import { fetchCargoTypesAction, fetchPortsAction } from '@/actions/report';
 
-export default function CargoTurnoverReportPage() {
-  const ports: AppClientsTypes[] = [
-    { id: 1, enabled: true, name: 'Port Szczecin', city: 'Szczecin', orgName: 'ZPS' },
-    { id: 2, enabled: true, name: 'Port Gdańsk', city: 'Gdańsk', orgName: 'Port Gdańsk' },
-    { id: 3, enabled: true, name: 'Port Gdynia', city: 'Gdynia', orgName: 'Port Gdynia' },
-    { id: 4, enabled: true, name: 'Port Świnoujście', city: 'Świnoujście', orgName: 'Port Świnoujście' },
-  ];
+export default async function CargoTurnoverReportPage() {
+  const [ports, groups] = await Promise.all([
+    fetchPortsAction(),
+    fetchCargoTypesAction(),
+  ]);
 
   return (
     <>
@@ -33,7 +30,7 @@ export default function CargoTurnoverReportPage() {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      <MainPage ports={ports} groups={commodityGroups} />
+      <MainPage ports={ports} groups={groups} />
     </>
   );
 }

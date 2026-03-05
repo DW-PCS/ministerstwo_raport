@@ -35,8 +35,8 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
   const [selectedPorts, setSelectedPorts] = useState<string[]>([]);
   const [selectedCommodities, setSelectedCommodities] = useState<string[]>([]);
   const [periodType, setPeriodType] = useState<periodType>('konkretne');
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date(2025, 0, 1));
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date(2025, 11, 31));
   const [month, setMonth] = useState<monthTypes>('styczeń');
   const [quarter, setQuarter] = useState<quarterTypes>('I_kwrtał');
   const [halfYear, setHalfYear] = useState<halfYearType>('I półrocze');
@@ -68,8 +68,8 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
     setSelectedPorts([]);
     setSelectedCommodities([]);
     setPeriodType('konkretne');
-    setStartDate(undefined);
-    setEndDate(undefined);
+    setStartDate(new Date(2025, 0, 1));
+    setEndDate(new Date(2025, 11, 31));
     setMonth('styczeń');
     setQuarter('I_kwrtał');
     setHalfYear('I półrocze');

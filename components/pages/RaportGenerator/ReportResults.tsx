@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import useRaportContext from '@/contexts/RaportContext';
-import { allCommoditiesMap, COLORS } from '@/lib/constants';
+import { COLORS } from '@/lib/constants';
 import { generateChartData } from '@/lib/helpers';
 import { formatNumber } from '@/lib/helpers/format-helpers';
 import { Tooltip as AntdTooltip } from 'antd';
@@ -33,11 +33,9 @@ export default function ReportResults({ data }: ReportResultsProps) {
   const { submittedCommodities, submittedPorts, isReportGenerated, startDate, endDate } =
     useRaportContext();
 
-  const mappedCommodities = submittedCommodities.map(commodity => allCommoditiesMap[commodity]);
-
   const chartData = generateChartData({
     ports: submittedPorts,
-    commodities: mappedCommodities,
+    commodities: submittedCommodities,
     data,
     selectedCommodities: submittedCommodities,
   });

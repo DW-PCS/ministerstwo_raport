@@ -25,7 +25,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { token, user } = await getServerAuthSession();
+  const { token } = await getServerAuthSession();
 
   return (
     <html lang="en">
@@ -33,7 +33,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ClinetProviders initialToken={token} initialUser={user}>
+        <ClinetProviders initialToken={token}>
           <Header />
           {children}
           <Toaster />

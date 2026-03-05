@@ -1,7 +1,9 @@
 'use client';
 
+import { fetchReportDataAction } from '@/actions/report';
 import useRaportContext from '@/contexts/RaportContext';
-import { portData } from '@/lib/constants';
+import { AppClientsTypes } from '@/lib/types';
+import { format } from 'date-fns';
 import { useState } from 'react';
 
 type ReportRow = {
@@ -10,44 +12,25 @@ type ReportRow = {
   ilosc: number;
 };
 
-const useReportData = () => {
-  const { selectedPorts, selectedCommodities } = useRaportContext();
+const useReportData = (allPorts: AppClientsTypes[]) => {
+  const { selectedPorts, selectedCommodities, startDate, endDate } = useRaportContext();
 
   const [data, setData] = useState<ReportRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  const buildMockReportData = (): ReportRow[] => {
-    const rows: ReportRow[] = [];
-
-    selectedPorts.forEach(port => {
-      const portEntry = portData[port];
-      if (!portEntry) return;
-
-      selectedCommodities.forEach(commodity => {
-        const commodityEntry = portEntry[commodity];
-        if (!commodityEntry) return;
-
-        rows.push({
-          port,
-          kod: commodity,
-          ilosc: commodityEntry.value,
-        });
-      });
-    });
-
-    return rows;
-  };
 
   async function fetchProductGroupData(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 700));
-
-      const result = buildMockReportData();
+      const appClients = allPorts.filter(p => selectedPorts.includes(p.name));
+      const result = await fetchReportDataAction(
+        appClients,
+        selectedCommodities,
+        format(startDate!, 'yyyy-MM-dd'),
+        format(endDate!, 'yyyy-MM-dd')
+      );
       setData(result);
-
       return result;
     } finally {
       setIsLoading(false);

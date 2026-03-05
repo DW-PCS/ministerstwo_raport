@@ -1,17 +1,14 @@
 'use client';
 import { clearAuthCookies, getAuthCookieSession } from '@/actions/authCookies';
-import { loginWithAzure, refreshToken } from '@/lib/auth/authService';
-import { AuthUserPayload } from '@/lib/types';
+import { loginAction, logoutAction } from '@/actions/auth';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   token: string | null;
-  user: AuthUserPayload | null;
   loading: boolean;
-  login: () => void;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  refreshToken: () => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -19,60 +16,53 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 type AuthProviderProps = {
   children: ReactNode;
   initialToken: string | null;
-  initialUser: AuthUserPayload | null;
 };
 
-export function AuthProvider({ children, initialToken, initialUser }: AuthProviderProps) {
+export function AuthProvider({ children, initialToken }: AuthProviderProps) {
   const [token, setToken] = useState<string | null>(initialToken);
-  const [user, setUser] = useState<AuthUserPayload | null>(initialUser);
-  const loading = false;
   const [isAuthenticated, setIsAuthenticated] = useState(!!initialToken);
+  const loading = false;
 
   useEffect(() => {
     const checkToken = async () => {
       if (typeof window === 'undefined') return;
-
       const cookieSession = await getAuthCookieSession();
-      const storedToken = cookieSession.token;
-      const expiryTime = cookieSession.expiryTime;
-
-      if (storedToken && expiryTime && Date.now() < parseInt(expiryTime, 10)) {
-        setToken(storedToken);
+      if (cookieSession.token) {
+        setToken(cookieSession.token);
         setIsAuthenticated(true);
       } else {
         await clearAuthCookies();
         setToken(null);
-        setUser(null);
         setIsAuthenticated(false);
       }
     };
 
-    const intervalId = setInterval(() => {
-      void checkToken();
-    }, 60000);
-
+    const intervalId = setInterval(() => void checkToken(), 60000);
     return () => clearInterval(intervalId);
   }, []);
 
+  const login = async (username: string, password: string) => {
+    const result = await loginAction(username, password);
+    if (result.success) {
+      const cookieSession = await getAuthCookieSession();
+      setToken(cookieSession.token);
+      setIsAuthenticated(true);
+    }
+    return result;
+  };
+
   const logout = async () => {
-    await clearAuthCookies();
+    await logoutAction();
     setToken(null);
-    setUser(null);
     setIsAuthenticated(false);
     window.location.href = '/';
   };
 
-  const authValues = {
-    isAuthenticated,
-    token,
-    user,
-    loading,
-    login: loginWithAzure,
-    logout,
-    refreshToken,
-  };
-
-  return <AuthContext.Provider value={authValues}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, token, loading, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => {

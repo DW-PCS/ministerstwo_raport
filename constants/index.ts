@@ -1,1 +1,1 @@
-export const PUBLIC_ROUTES = ['/', '/auth/azure-ad'];
+export const PUBLIC_ROUTES = ['/'];
