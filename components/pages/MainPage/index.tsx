@@ -11,10 +11,23 @@ interface MainPageProps {
 }
 
 const MainPage = ({ ports, groups }: MainPageProps) => {
-  const { generateReport, resetFilters } = useRaportContext();
+  const { generateReport, resetFilters, selectedPorts, selectedCommodities, startDate, endDate } = useRaportContext();
   const { fetchProductGroupData, data, isLoading, resetData } = useReportData();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (selectedPorts.length === 0) {
+      toast.error('Wybierz co najmniej jeden port');
+      return;
+    }
+    if (selectedCommodities.length === 0) {
+      toast.error('Wybierz co najmniej jedną grupę towarową');
+      return;
+    }
+    if (!startDate || !endDate) {
+      toast.error('Wybierz datę początkową i końcową');
+      return;
+    }
     await fetchProductGroupData(e);
     generateReport();
     toast.success('Raport wygenerowany', { description: 'Dane zostały załadowane pomyślnie.' });

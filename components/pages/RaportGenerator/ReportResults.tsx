@@ -13,6 +13,7 @@ import {
 import useRaportContext from '@/contexts/RaportContext';
 import { allCommoditiesMap, COLORS } from '@/lib/constants';
 import { generateChartData } from '@/lib/helpers';
+import { formatNumber } from '@/lib/helpers/format-helpers';
 import { Tooltip as AntdTooltip } from 'antd';
 import {
   Bar,
@@ -57,7 +58,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
 
   return (
     <Card className="shadow-lg rounded-2xl overflow-hidden border-0">
-      <CardHeader className="border-b bg-white flex flex-col sm:flex-row justify-between items-center border-black/10">
+      <CardHeader className="border-b bg-white flex flex-col sm:flex-row justify-between items-center border-black/20">
         <div>
           <CardTitle className="text-xl font-semibold">Szczegółowe dane</CardTitle>
           {startDate && endDate && (
@@ -72,56 +73,49 @@ export default function ReportResults({ data }: ReportResultsProps) {
         <div>
           {chartData.length > 0 ? (
             <>
-              <div>
-                {chartData.map(port => {
-                  return (
-                    <div key={port.name} className="border-b last:border-b-0 border-black/10">
-                      <div className="p-4 bg-gray-50">
-                        <AntdTooltip title={String(port.name)}>
-                          <h4 className="text-lg font-medium truncate">{port.name}</h4>
-                        </AntdTooltip>
-                      </div>
-                      <Table>
-                        <TableBody>
-                          {submittedCommodities.map(commodity => {
-                            return (
-                              <TableRow
-                                key={`${port.name}-${commodity}`}
-                                className="hover:bg-gray-50 border-black/10"
-                              >
-                                <TableCell className="font-medium">
-                                  <AntdTooltip title={commodity}>
-                                    <span className="inline-block max-w-[280px] truncate align-bottom">
-                                      {commodity}
-                                    </span>
-                                  </AntdTooltip>
-                                </TableCell>
-                                <TableCell className="text-right font-medium">
-                                  <AntdTooltip title={String(port[commodity] || 0) + ' T'}>
-                                    <span>{String(port[commodity] || 0) + ' T'}</span>
-                                  </AntdTooltip>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                        <TableHeader>
-                          <TableRow className="bg-white hover:bg-white border-black/10">
-                            <TableHead className="w-[60%] font-bold text-gray-600">
-                              Grupa towarowa
-                            </TableHead>
-                            <TableHead className="text-right font-bold text-gray-600">
-                              Wartość
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                      </Table>
-                    </div>
-                  );
-                })}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-[#1a0069] hover:bg-[#1a0069]">
+                      <TableHead className="font-bold text-white border-r border-white/20">
+                        Port
+                      </TableHead>
+                      {commodityKeys.map(key => (
+                        <TableHead key={key} className="text-right font-bold text-white border-r border-white/20 last:border-r-0">
+                          <AntdTooltip title={key}>
+                            <span className="inline-block max-w-30 truncate align-bottom">{key} [t]</span>
+                          </AntdTooltip>
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {chartData.map((port, rowIndex) => (
+                      <TableRow
+                        key={String(port.name)}
+                        className={`hover:bg-purple-50 border-black/20 ${rowIndex % 2 === 0 ? 'bg-[#f5f3ff]' : 'bg-white'}`}
+                      >
+                        <TableCell className="font-medium border-r border-black/20">{String(port.name)}</TableCell>
+                        {commodityKeys.map(key => (
+                          <TableCell key={key} className="text-right tabular-nums border-r border-black/20 last:border-r-0">
+                            {formatNumber(Number(port[key] || 0))}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                    <TableRow className="bg-[#e8e4f5] hover:bg-[#e8e4f5] border-black/20 font-bold">
+                      <TableCell className="font-bold border-r border-black/20">SUMA</TableCell>
+                      {commodityKeys.map(key => (
+                        <TableCell key={key} className="text-right tabular-nums font-bold border-r border-black/20 last:border-r-0">
+                          {formatNumber(chartData.reduce((sum, port) => sum + Number(port[key] || 0), 0))}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableBody>
+                </Table>
               </div>
-              <div className="my-10 border-b border border-black/10"> </div>
-              <div className="h-80 sm:p-6 bg-white border-b border-black/10 text-xs sm:text-base">
+              <div className="my-10 border-b border border-black/20"> </div>
+              <div className="h-80 sm:p-6 bg-white border-b border-black/20 text-xs sm:text-base">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}

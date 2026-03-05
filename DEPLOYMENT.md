@@ -5,7 +5,13 @@
 ### Step 1 — Build new Docker image (laptop, PowerShell)
 
 ```powershell
-docker build --build-arg NEXT_PUBLIC_AZURE_AD_CLIENT_ID=3af57c76-7425-4946-a2ce-f3bd2930c21d --build-arg NEXT_PUBLIC_AZURE_AD_SCOPE="api://3af57c76-7425-4946-a2ce-f3bd2930c21d/access_as_user" --build-arg NEXT_PUBLIC_AZURE_AD_ENDPOINT="https://login.microsoftonline.com/common/oauth2/v2.0/token" --build-arg NEXT_PUBLIC_AZURE_AD_TENANT_ID=common --build-arg NEXT_PUBLIC_APP_URL=http://74.248.33.80:3000 -t thewicha/ministerstwo-app:latest .
+doppler run -- docker build `
+  --build-arg NEXT_PUBLIC_AZURE_AD_CLIENT_ID=$(doppler secrets get NEXT_PUBLIC_AZURE_AD_CLIENT_ID --plain) `
+  --build-arg NEXT_PUBLIC_AZURE_AD_SCOPE=$(doppler secrets get NEXT_PUBLIC_AZURE_AD_SCOPE --plain) `
+  --build-arg NEXT_PUBLIC_AZURE_AD_ENDPOINT=$(doppler secrets get NEXT_PUBLIC_AZURE_AD_ENDPOINT --plain) `
+  --build-arg NEXT_PUBLIC_AZURE_AD_TENANT_ID=$(doppler secrets get NEXT_PUBLIC_AZURE_AD_TENANT_ID --plain) `
+  --build-arg NEXT_PUBLIC_APP_URL=$(doppler secrets get NEXT_PUBLIC_APP_URL --plain) `
+  -t thewicha/ministerstwo-app:latest .
 ```
 
 ### Step 2 — Push to Docker Hub (laptop, PowerShell)

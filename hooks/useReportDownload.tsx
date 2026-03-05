@@ -1,5 +1,6 @@
 import { toast } from '@/components/ui/use-toast';
 import useRaportContext from '@/contexts/RaportContext';
+import { formatNumber } from '@/lib/helpers/format-helpers';
 import Chart from 'chart.js/auto';
 import {
   AlignmentType,
@@ -413,26 +414,29 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                 headerRows: 1,
                 widths: ['*', ...processedData.commodityNames.map(() => 'auto')],
                 body: [
-                  processedData.headers.map(header => ({
-                    text: String(header),
+                  processedData.headers.map((header, headerIndex) => ({
+                    text: headerIndex === 0 ? String(header) : `${String(header)} [t]`,
                     color: '#ffffff',
                     bold: true,
                     fontSize: 9,
+                    alignment: headerIndex === 0 ? 'left' : 'right',
                     fillColor: BRAND_PRIMARY,
                     margin: [4, 4, 4, 4],
                   })),
                   ...processedData.rows.map((row, rowIndex) =>
-                    row.map(cell => ({
-                      text: String(cell),
+                    row.map((cell, cellIndex) => ({
+                      text: cellIndex === 0 ? String(cell) : formatNumber(Number(cell)),
                       fontSize: 9,
+                      alignment: cellIndex === 0 ? 'left' : 'right',
                       fillColor: rowIndex % 2 === 0 ? '#f5f3ff' : undefined,
                       margin: [4, 3, 4, 3],
                     }))
                   ),
-                  processedData.totalsRow.map(cell => ({
-                    text: String(cell),
+                  processedData.totalsRow.map((cell, cellIndex) => ({
+                    text: cellIndex === 0 ? String(cell) : formatNumber(Number(cell)),
                     bold: true,
                     fontSize: 9,
+                    alignment: cellIndex === 0 ? 'left' : 'right',
                     fillColor: BRAND_LIGHT,
                     color: BRAND_DARK,
                     margin: [4, 4, 4, 4],
@@ -503,13 +507,13 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
         const darkHex = '0F172A';
 
         const headerRow = new TableRow({
-          children: processedData.headers.map(header =>
+          children: processedData.headers.map((header, headerIndex) =>
             new TableCell({
               shading: { type: ShadingType.SOLID, color: brandPrimaryHex, fill: brandPrimaryHex },
               verticalAlign: VerticalAlign.CENTER,
               children: [new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: String(header), bold: true, color: 'FFFFFF', size: 18 })],
+                alignment: headerIndex === 0 ? AlignmentType.LEFT : AlignmentType.RIGHT,
+                children: [new TextRun({ text: headerIndex === 0 ? String(header) : `${String(header)} [t]`, bold: true, color: 'FFFFFF', size: 18 })],
               })],
             })
           ),
@@ -525,7 +529,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                 verticalAlign: VerticalAlign.CENTER,
                 children: [new Paragraph({
                   alignment: cellIndex === 0 ? AlignmentType.LEFT : AlignmentType.RIGHT,
-                  children: [new TextRun({ text: String(cell), size: 18 })],
+                  children: [new TextRun({ text: cellIndex === 0 ? String(cell) : formatNumber(Number(cell)), size: 18 })],
                 })],
               })
             ),
@@ -539,7 +543,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
               verticalAlign: VerticalAlign.CENTER,
               children: [new Paragraph({
                 alignment: cellIndex === 0 ? AlignmentType.LEFT : AlignmentType.RIGHT,
-                children: [new TextRun({ text: String(cell), bold: true, size: 18, color: darkHex })],
+                children: [new TextRun({ text: cellIndex === 0 ? String(cell) : formatNumber(Number(cell)), bold: true, size: 18, color: darkHex })],
               })],
             })
           ),
