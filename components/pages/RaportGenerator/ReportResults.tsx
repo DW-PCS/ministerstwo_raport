@@ -79,9 +79,14 @@ export default function ReportResults({ data }: ReportResultsProps) {
                         Port
                       </TableHead>
                       {commodityKeys.map(key => (
-                        <TableHead key={key} className="text-right font-bold text-white border-r border-white/20 last:border-r-0">
+                        <TableHead
+                          key={key}
+                          className="text-right font-bold text-white border-r border-white/20 last:border-r-0"
+                        >
                           <AntdTooltip title={key}>
-                            <span className="inline-block max-w-30 truncate align-bottom">{key} [t]</span>
+                            <span className="inline-block max-w-30 truncate align-bottom">
+                              {key} [t]
+                            </span>
                           </AntdTooltip>
                         </TableHead>
                       ))}
@@ -93,9 +98,14 @@ export default function ReportResults({ data }: ReportResultsProps) {
                         key={String(port.name)}
                         className={`hover:bg-purple-50 border-black/20 ${rowIndex % 2 === 0 ? 'bg-[#f5f3ff]' : 'bg-white'}`}
                       >
-                        <TableCell className="font-medium border-r border-black/20">{String(port.name)}</TableCell>
+                        <TableCell className="font-medium border-r border-black/20">
+                          {String(port.name)}
+                        </TableCell>
                         {commodityKeys.map(key => (
-                          <TableCell key={key} className="text-right tabular-nums border-r border-black/20 last:border-r-0">
+                          <TableCell
+                            key={key}
+                            className="text-right tabular-nums border-r border-black/20 last:border-r-0"
+                          >
                             {formatNumber(Number(port[key] || 0))}
                           </TableCell>
                         ))}
@@ -104,8 +114,13 @@ export default function ReportResults({ data }: ReportResultsProps) {
                     <TableRow className="bg-[#e8e4f5] hover:bg-[#e8e4f5] border-black/20 font-bold">
                       <TableCell className="font-bold border-r border-black/20">SUMA</TableCell>
                       {commodityKeys.map(key => (
-                        <TableCell key={key} className="text-right tabular-nums font-bold border-r border-black/20 last:border-r-0">
-                          {formatNumber(chartData.reduce((sum, port) => sum + Number(port[key] || 0), 0))}
+                        <TableCell
+                          key={key}
+                          className="text-right tabular-nums font-bold border-r border-black/20 last:border-r-0"
+                        >
+                          {formatNumber(
+                            chartData.reduce((sum, port) => sum + Number(port[key] || 0), 0)
+                          )}
                         </TableCell>
                       ))}
                     </TableRow>

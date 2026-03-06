@@ -2,7 +2,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import useRaportContext from '@/contexts/RaportContext';
 import { AppClientsTypes } from '@/lib/types';
-import { Tooltip } from 'antd';
 import Title from '../../Title';
 
 interface PortSelectsProps {
@@ -24,11 +23,9 @@ const PortSelects = ({ ports }: PortSelectsProps) => {
               onCheckedChange={checked => handlePortChange(port.city, checked as boolean)}
               className="border-gray-400 text-white data-[state=checked]:bg-[#1a0069] data-[state=checked]:border-[#1a0069]"
             />
-            <Tooltip title={port.name}>
-              <Label htmlFor={`port-${port.city}`} className="text-sm sm:text-base cursor-pointer">
-                {port.city}
-              </Label>
-            </Tooltip>
+            <Label htmlFor={`port-${port.city}`} className="text-sm sm:text-base cursor-pointer">
+              {port.city}
+            </Label>
           </div>
         ))}
       </div>

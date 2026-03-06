@@ -1,5 +1,5 @@
 import { toast } from '@/components/ui/use-toast';
-import useRaportContext from '@/contexts/RaportContext';
+import useRaportContext, { ChartType } from '@/contexts/RaportContext';
 import { formatNumber } from '@/lib/helpers/format-helpers';
 import Chart from 'chart.js/auto';
 import {
@@ -10,6 +10,7 @@ import {
   Header,
   HeadingLevel,
   ImageRun,
+  PageNumber,
   Packer,
   Paragraph,
   ShadingType,
@@ -80,7 +81,7 @@ function dataUrlToUint8ArrayFn(dataUrl: string): Uint8Array {
 }
 
 export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadReturn => {
-  const { isReportGenerated } = useRaportContext();
+  const { isReportGenerated, includeCharts, selectedChartTypes } = useRaportContext();
   const [isDownloadEnabled, setIsDownloadEnabled] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
@@ -165,7 +166,10 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
   );
 
   const buildChartImages = useCallback(
-    async (processedData: ProcessedData): Promise<Array<{ title: string; image: string }>> => {
+    async (
+      processedData: ProcessedData,
+      chartTypes: ChartType[]
+    ): Promise<Array<{ title: string; image: string }>> => {
       const ports = Object.keys(processedData.portData);
       const commodityTotals = processedData.commodityNames.map(commodity =>
         ports.reduce((sum, port) => sum + (processedData.portData[port][commodity] || 0), 0)
@@ -175,8 +179,9 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
       const chartFontSize = 14;
       const chartLegendFontSize = 18;
 
-      const charts = [
+      const allCharts: { type: ChartType; title: string; config: Record<string, unknown> }[] = [
         {
+          type: 'bar_port',
           title: 'Wykres 1: Struktura ładunków wg portu',
           config: {
             type: 'bar',
@@ -201,6 +206,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
           },
         },
         {
+          type: 'bar_commodity',
           title: 'Wykres 2: Wolumen wg grupy towarowej i portu',
           config: {
             type: 'bar',
@@ -228,6 +234,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
           },
         },
         {
+          type: 'pie',
           title: 'Wykres 3: Udział grup towarowych',
           config: {
             type: 'pie',
@@ -252,8 +259,10 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
         },
       ];
 
+      const filtered = allCharts.filter(c => chartTypes.includes(c.type));
+
       return Promise.all(
-        charts.map(async chartDef => ({
+        filtered.map(async chartDef => ({
           title: chartDef.title,
           image: await renderChartAsImage(chartDef.config),
         }))
@@ -301,11 +310,13 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
         setIsDownloading(true);
         const processedData = processData();
         const periodText = formatPeriodText(startDate, endDate);
-        const chartImages = await buildChartImages(processedData);
+        const chartImages =
+          includeCharts && selectedChartTypes.length > 0
+            ? await buildChartImages(processedData, selectedChartTypes)
+            : [];
 
-        const [logoDataUrl, logoSmallDataUrl, headerLogoDataUrl] = await Promise.all([
+        const [logoDataUrl, headerLogoDataUrl] = await Promise.all([
           fetchImageAsDataUrl('/05_znak_uproszczony_kolor_biale_tlo.png'),
-          fetchImageAsDataUrl('/14_znak_skrot_kolor_ciemne_tlo.png'),
           fetchImageAsDataUrl('/10_znak_bez_orla_kolor_ciemne_tlo.png'),
         ]);
 
@@ -318,105 +329,74 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
         const pdfFontsClient = pdfFonts as unknown as { vfs: Record<string, string> };
         pdfMakeClient.vfs = pdfFontsClient.vfs;
 
-        const compactChartLayout = processedData.rows.length <= 8;
         const pdfChartWidth = 500;
+        const chartHeight = 220;
 
-        const compactChartsContent = compactChartLayout
-          ? chartImages.flatMap((chart, index) => [
-              { text: chart.title, style: 'chartTitle', margin: [0, index === 0 ? 20 : 18, 0, 8] },
-              {
-                image: chart.image,
-                fit: [pdfChartWidth, index === 0 ? 195 : 260],
-                alignment: 'center',
-              },
-              ...(index === 0 ? [{ text: '', pageBreak: 'after' }] : []),
-            ])
-          : chartImages.flatMap((chart, index) => [
-              {
-                text: chart.title,
-                style: 'chartTitle',
-                pageBreak: index === 0 ? 'before' : (index === 1 ? 'before' : undefined),
-                margin: [0, 20, 0, 8],
-              },
-              { image: chart.image, fit: [pdfChartWidth, index === 0 ? 300 : 260], alignment: 'center' },
-            ]);
-
-        const generatedAt = new Date().toLocaleDateString('pl-PL', {
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric',
-        });
+        const compactChartsContent: unknown[] = [];
+        for (let i = 0; i < chartImages.length; i++) {
+          const isFirstOnPage = i === 0 || i % 2 === 0;
+          compactChartsContent.push({
+            stack: [
+              { text: chartImages[i].title, style: 'chartTitle', margin: [0, 0, 0, 8] },
+              { image: chartImages[i].image, fit: [pdfChartWidth, chartHeight], alignment: 'center' },
+            ],
+            margin: [0, isFirstOnPage ? 0 : 80, 0, 0],
+            ...(isFirstOnPage ? { pageBreak: 'before' } : {}),
+          });
+        }
 
         const definition = {
           pageSize: 'A4',
-          pageMargins: [32, 90, 32, 64],
+          pageMargins: [32, 72, 32, 64],
 
-          header: () => ({
-            margin: [32, 16, 32, 0],
-            table: {
-              widths: [74, '*', 'auto'],
-              body: [
-                [
-                  {
-                    image: headerLogoDataUrl,
-                    width: 70,
-                    height: 40,
-                    margin: [0, 2, 0, 0],
-                  },
-                  {
-                    stack: [
-                      {
-                        text: 'Ministerstwo Infrastruktury',
-                        style: 'headerOrg',
-                        margin: [8, 4, 0, 0],
-                      },
-                      {
-                        text: 'Raport obrotów ładunkowych',
-                        style: 'headerSub',
-                        margin: [8, 2, 0, 0],
-                      },
-                    ],
-                  },
-                  {
-                    text: periodText,
-                    style: 'headerPeriod',
-                    alignment: 'right',
-                    margin: [0, 8, 0, 0],
-                  },
+          header: (currentPage: number) => {
+            if (currentPage === 1) return null;
+            return {
+              margin: [32, 8, 32, 0],
+              table: {
+                widths: [74, '*', 'auto'],
+                body: [
+                  [
+                    {
+                      image: headerLogoDataUrl,
+                      width: 70,
+                      height: 40,
+                      margin: [0, 0, 0, 0],
+                    },
+                    { text: '', border: [false, false, false, false] },
+                    {
+                      text: periodText,
+                      style: 'headerPeriod',
+                      alignment: 'right',
+                      margin: [0, 12, 0, 0],
+                    },
+                  ],
                 ],
-              ],
-            },
-            layout: {
-              hLineWidth: (i: number) => (i === 1 ? 1.5 : 0),
-              vLineWidth: () => 0,
-              hLineColor: () => BRAND_PRIMARY,
-              paddingBottom: () => 6,
-            },
-          }),
+              },
+              layout: {
+                hLineWidth: () => 0,
+                vLineWidth: () => 0,
+                paddingBottom: () => 6,
+              },
+            };
+          },
 
           footer: (currentPage: number, pageCount: number) => ({
             margin: [32, 8, 32, 8],
             table: {
-              widths: ['*', 'auto', 48],
+              widths: ['*', 'auto'],
               body: [
                 [
                   {
-                    text: 'Dokument wygenerowany automatycznie — dane mają charakter informacyjny.',
+                    text: 'Dane wygenerowane z systemów portowych.',
                     style: 'footerText',
                     margin: [0, 6, 0, 0],
                   },
                   {
                     text: `Strona ${currentPage} / ${pageCount}`,
                     style: 'footerPage',
-                    alignment: 'center',
-                    margin: [0, 6, 0, 0],
-                  },
-                  {
-                    image: logoSmallDataUrl,
-                    width: 24,
-                    height: 28,
                     alignment: 'right',
-                    margin: [0, 2, 0, 0],
+                    margin: [0, 6, 0, 0],
                   },
                 ],
               ],
@@ -442,39 +422,20 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                           width: 168,
                           height: 72,
                           alignment: 'center',
+                          margin: [0, 0, 0, 4],
+                        },
+                        {
+                          text: 'Departament Gospodarki Morskiej i Żeglugi Śródlądowej',
+                          style: 'coverDept',
+                          alignment: 'center',
                           margin: [0, 0, 0, 16],
                         },
-                        { text: 'Raport Portowy', style: 'coverTitle', alignment: 'center' },
+                        { text: 'Raport obrotów portowych', style: 'coverTitle', alignment: 'center' },
                         {
                           text: periodText.replace('Okres: ', ''),
                           style: 'coverPeriod',
                           alignment: 'center',
                           margin: [0, 8, 0, 0],
-                        },
-                        {
-                          canvas: [
-                            {
-                              type: 'line',
-                              x1: 60,
-                              y1: 16,
-                              x2: 420,
-                              y2: 16,
-                              lineWidth: 1.5,
-                              lineColor: BRAND_PRIMARY,
-                            },
-                          ],
-                          margin: [0, 8, 0, 8],
-                        },
-                        {
-                          text: `Data wygenerowania: ${generatedAt}`,
-                          style: 'coverMeta',
-                          alignment: 'center',
-                        },
-                        {
-                          text: 'Ministerstwo Infrastruktury',
-                          style: 'coverOrg',
-                          alignment: 'center',
-                          margin: [0, 4, 0, 0],
                         },
                       ],
                       fillColor: BRAND_LIGHT,
@@ -485,7 +446,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                 ],
               },
               layout: 'noBorders',
-              margin: [0, 0, 0, 24],
+              margin: [0, -42, 0, 24],
             },
 
             {
@@ -539,6 +500,8 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
             coverPeriod: { fontSize: 14, color: '#374151' },
             coverMeta: { fontSize: 10, color: '#6b7280' },
             coverOrg: { fontSize: 11, bold: true, color: BRAND_PRIMARY },
+            coverDept: { fontSize: 9, color: '#6b7280' },
+            coverSignatureLabel: { fontSize: 9, color: '#9ca3af', italics: true },
             headerOrg: { fontSize: 11, bold: true, color: BRAND_PRIMARY },
             headerSub: { fontSize: 9, color: '#374151' },
             headerPeriod: { fontSize: 9, color: '#6b7280' },
@@ -561,7 +524,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
         setIsDownloading(false);
       }
     },
-    [buildChartImages, formatPeriodText, getFilename, isDownloadEnabled, processData]
+    [buildChartImages, formatPeriodText, getFilename, includeCharts, isDownloadEnabled, processData, selectedChartTypes]
   );
 
   const downloadWord = useCallback(
@@ -572,19 +535,16 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
 
         const processedData = processData();
         const periodText = formatPeriodText(startDate, endDate);
-        const chartImages = await buildChartImages(processedData);
+        const chartImages =
+          includeCharts && selectedChartTypes.length > 0
+            ? await buildChartImages(processedData, selectedChartTypes)
+            : [];
 
-        const [logoBytes, logoSmallBytes, headerLogoBytes] = await Promise.all([
+        const [logoBytes, , headerLogoBytes] = await Promise.all([
           fetchImageAsUint8Array('/05_znak_uproszczony_kolor_biale_tlo.png'),
           fetchImageAsUint8Array('/14_znak_skrot_kolor_ciemne_tlo.png'),
           fetchImageAsUint8Array('/10_znak_bez_orla_kolor_ciemne_tlo.png'),
         ]);
-
-        const generatedAt = new Date().toLocaleDateString('pl-PL', {
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric',
-        });
 
         const brandPrimaryHex = BRAND_PRIMARY.replace('#', '');
         const brandLightHex = 'E8E4F5';
@@ -695,7 +655,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                 new TableRow({
                   children: [
                     new TableCell({
-                      width: { size: 25, type: WidthType.PERCENTAGE },
+                      width: { size: 20, type: WidthType.PERCENTAGE },
                       verticalAlign: VerticalAlign.CENTER,
                       children: [
                         new Paragraph({
@@ -710,32 +670,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                       ],
                     }),
                     new TableCell({
-                      width: { size: 45, type: WidthType.PERCENTAGE },
-                      verticalAlign: VerticalAlign.CENTER,
-                      children: [
-                        new Paragraph({
-                          children: [
-                            new TextRun({
-                              text: 'Ministerstwo Infrastruktury',
-                              bold: true,
-                              color: brandPrimaryHex,
-                              size: 22,
-                            }),
-                          ],
-                        }),
-                        new Paragraph({
-                          children: [
-                            new TextRun({
-                              text: 'Raport obrotów ładunkowych',
-                              color: '374151',
-                              size: 18,
-                            }),
-                          ],
-                        }),
-                      ],
-                    }),
-                    new TableCell({
-                      width: { size: 30, type: WidthType.PERCENTAGE },
+                      width: { size: 80, type: WidthType.PERCENTAGE },
                       verticalAlign: VerticalAlign.CENTER,
                       children: [
                         new Paragraph({
@@ -774,7 +709,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                         new Paragraph({
                           children: [
                             new TextRun({
-                              text: 'Dokument wygenerowany automatycznie — dane mają charakter informacyjny.',
+                              text: 'Dane wygenerowane z systemów portowych.',
                               color: '9CA3AF',
                               size: 14,
                             }),
@@ -783,33 +718,16 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                       ],
                     }),
                     new TableCell({
-                      width: { size: 20, type: WidthType.PERCENTAGE },
+                      width: { size: 30, type: WidthType.PERCENTAGE },
                       verticalAlign: VerticalAlign.CENTER,
                       children: [
                         new Paragraph({
                           alignment: AlignmentType.RIGHT,
                           children: [
-                            new TextRun({
-                              text: `Wygenerowano: ${generatedAt}`,
-                              color: '6B7280',
-                              size: 14,
-                            }),
-                          ],
-                        }),
-                      ],
-                    }),
-                    new TableCell({
-                      width: { size: 10, type: WidthType.PERCENTAGE },
-                      verticalAlign: VerticalAlign.CENTER,
-                      children: [
-                        new Paragraph({
-                          alignment: AlignmentType.RIGHT,
-                          children: [
-                            new ImageRun({
-                              data: logoSmallBytes,
-                              type: 'png',
-                              transformation: { width: 24, height: 28 },
-                            }),
+                            new TextRun({ text: 'Strona ', color: '6B7280', size: 14 }),
+                            new TextRun({ children: [PageNumber.CURRENT], color: '6B7280', size: 14 }),
+                            new TextRun({ text: ' / ', color: '6B7280', size: 14 }),
+                            new TextRun({ children: [PageNumber.TOTAL_PAGES], color: '6B7280', size: 14 }),
                           ],
                         }),
                       ],
@@ -821,15 +739,18 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
           ],
         });
 
+        const firstPageHeader = new Header({ children: [new Paragraph({ children: [] })] });
+
         const doc = new Document({
           sections: [
             {
-              headers: { default: pageHeader },
-              footers: { default: pageFooter },
+              properties: { titlePage: true },
+              headers: { default: pageHeader, first: firstPageHeader },
+              footers: { default: pageFooter, first: pageFooter },
               children: [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
-                  spacing: { before: 480, after: 240 },
+                  spacing: { before: 480, after: 120 },
                   children: [
                     new ImageRun({
                       data: logoBytes,
@@ -840,10 +761,21 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                 }),
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
+                  spacing: { after: 240 },
+                  children: [
+                    new TextRun({
+                      text: 'Departament Gospodarki Morskiej i Żeglugi Śródlądowej',
+                      color: '6B7280',
+                      size: 18,
+                    }),
+                  ],
+                }),
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
                   spacing: { after: 120 },
                   children: [
                     new TextRun({
-                      text: 'Raport Portowy',
+                      text: 'Raport obrotów portowych',
                       bold: true,
                       size: 52,
                       color: brandPrimaryHex,
@@ -854,29 +786,6 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                   alignment: AlignmentType.CENTER,
                   spacing: { after: 120 },
                   children: [new TextRun({ text: periodText, size: 28, color: '374151' })],
-                }),
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  spacing: { after: 80 },
-                  children: [
-                    new TextRun({
-                      text: `Data wygenerowania: ${generatedAt}`,
-                      size: 20,
-                      color: '6B7280',
-                    }),
-                  ],
-                }),
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  spacing: { after: 480 },
-                  children: [
-                    new TextRun({
-                      text: 'Ministerstwo Infrastruktury',
-                      bold: true,
-                      size: 24,
-                      color: brandPrimaryHex,
-                    }),
-                  ],
                 }),
 
                 new Paragraph({
@@ -938,7 +847,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
         setIsDownloading(false);
       }
     },
-    [buildChartImages, formatPeriodText, getFilename, isDownloadEnabled, processData]
+    [buildChartImages, formatPeriodText, getFilename, includeCharts, isDownloadEnabled, processData, selectedChartTypes]
   );
 
   const downloadReport = useCallback(
