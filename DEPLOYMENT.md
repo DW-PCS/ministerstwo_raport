@@ -4,6 +4,9 @@
 
 ### Step 1 — Build new Docker image (laptop, PowerShell)
 
+To run this comand you will need doker desktop open.
+
+
 ```powershell
 doppler run --project ministerstwo --config prd_daniel -- docker build `
   --build-arg NEXT_PUBLIC_AZURE_AD_CLIENT_ID=$(doppler secrets get NEXT_PUBLIC_AZURE_AD_CLIENT_ID --plain --project ministerstwo --config prd_daniel) `
@@ -37,7 +40,7 @@ docker compose ps
 docker compose logs -f
 ```
 
-App runs at: http://74.248.33.80:3000
+App runs at: http://74.248.33.80:3000   || https://raportymi.polskipcs.pl/
 
 ---
 
