@@ -34,7 +34,6 @@ docker compose down && docker pull thewicha/ministerstwo-app:latest && doppler r
 ```
 
 ### Step 4 — Verify
-
 ```bash
 docker compose ps
 docker compose logs -f

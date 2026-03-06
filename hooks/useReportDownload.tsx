@@ -177,7 +177,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
 
       const charts = [
         {
-          title: 'Wykres 1: Struktura ładunków wg portu (grupowany słupkowy)',
+          title: 'Wykres 1: Struktura ładunków wg portu',
           config: {
             type: 'bar',
             data: {
@@ -228,7 +228,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
           },
         },
         {
-          title: 'Wykres 3: Udział grup towarowych (kołowy)',
+          title: 'Wykres 3: Udział grup towarowych',
           config: {
             type: 'pie',
             data: {

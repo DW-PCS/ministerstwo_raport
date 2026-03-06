@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAuthenticated = !!token;
-  const isProtectedReportsRoute = pathname.startsWith('/reports');
+  const isProtectedReportsRoute = pathname.startsWith('/raporty');
 
   if (!isAuthenticated && isProtectedReportsRoute) {
     const redirectUrl = new URL('/', request.url);
