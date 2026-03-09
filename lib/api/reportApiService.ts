@@ -77,6 +77,8 @@ export async function getApplicationClients() {
 }
 
 export async function getProductGroups(data: ReportRequestData) {
+
+
   const res = await fetchApi('ReportMI/VproductGroup', {
     method: 'POST',
     body: data,

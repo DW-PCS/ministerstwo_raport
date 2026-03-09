@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import useReportDownload, { ReportDataItem } from '@/hooks/useReportDownload';
+
 import { Download, Loader2 } from 'lucide-react';
 
 interface ReportDownloadButtonProps {
@@ -22,40 +23,53 @@ const ReportDownloadButton = ({ data, startDate, endDate }: ReportDownloadButton
   const { isDownloadEnabled, downloadReport, isDownloading } = useReportDownload(data);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          disabled={!isDownloadEnabled || isDownloading}
-          className="flex cursor-pointer items-center gap-2 hover:bg-light-gray"
-        >
-          {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-          <span>Pobierz raport</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-white" align="end">
-        <DropdownMenuItem
-          onClick={() => downloadReport('csv', startDate, endDate)}
-          disabled={isDownloading}
-          className="cursor-pointer hover:bg-light-gray"
-        >
-          Pobierz jako CSV
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => downloadReport('pdf', startDate, endDate)}
-          disabled={isDownloading}
-          className="cursor-pointer hover:bg-light-gray"
-        >
-          Pobierz jako PDF
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => downloadReport('docx', startDate, endDate)}
-          disabled={isDownloading}
-          className="cursor-pointer hover:bg-light-gray"
-        >
-          Pobierz jako Word
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex flex-col items-end gap-1">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            disabled={!isDownloadEnabled || isDownloading}
+            className="flex cursor-pointer items-center gap-2 hover:bg-light-gray"
+          >
+            {isDownloading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Download size={16} />
+            )}
+            <span>Pobierz raport</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="bg-white" align="end">
+          <DropdownMenuItem
+            onClick={() => downloadReport('csv', startDate, endDate)}
+            disabled={isDownloading}
+            className="cursor-pointer hover:bg-light-gray"
+          >
+            Pobierz jako CSV
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => downloadReport('pdf', startDate, endDate)}
+            disabled={isDownloading}
+            className="cursor-pointer hover:bg-light-gray"
+          >
+            Pobierz jako PDF
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => downloadReport('docx', startDate, endDate)}
+            disabled={isDownloading}
+            className="cursor-pointer hover:bg-light-gray"
+          >
+            Pobierz jako Word
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => downloadReport('xlsx', startDate, endDate)}
+            disabled={isDownloading}
+            className="cursor-pointer hover:bg-light-gray"
+          >
+            Pobierz jako Excel
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 };
 
