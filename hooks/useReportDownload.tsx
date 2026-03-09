@@ -10,8 +10,8 @@ import {
   Header,
   HeadingLevel,
   ImageRun,
-  PageNumber,
   Packer,
+  PageNumber,
   Paragraph,
   ShadingType,
   Table,
@@ -338,7 +338,11 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
           compactChartsContent.push({
             stack: [
               { text: chartImages[i].title, style: 'chartTitle', margin: [0, 0, 0, 8] },
-              { image: chartImages[i].image, fit: [pdfChartWidth, chartHeight], alignment: 'center' },
+              {
+                image: chartImages[i].image,
+                fit: [pdfChartWidth, chartHeight],
+                alignment: 'center',
+              },
             ],
             margin: [0, isFirstOnPage ? 0 : 80, 0, 0],
             ...(isFirstOnPage ? { pageBreak: 'before' } : {}),
@@ -429,8 +433,13 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                           style: 'coverDept',
                           alignment: 'center',
                           margin: [0, 0, 0, 16],
+                          fontSize: 11,
                         },
-                        { text: 'Raport obrotów portowych', style: 'coverTitle', alignment: 'center' },
+                        {
+                          text: 'Raport obrotów portowych',
+                          style: 'coverTitle',
+                          alignment: 'center',
+                        },
                         {
                           text: periodText.replace('Okres: ', ''),
                           style: 'coverPeriod',
@@ -500,7 +509,7 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
             coverPeriod: { fontSize: 14, color: '#374151' },
             coverMeta: { fontSize: 10, color: '#6b7280' },
             coverOrg: { fontSize: 11, bold: true, color: BRAND_PRIMARY },
-            coverDept: { fontSize: 9, color: '#6b7280' },
+            coverDept: { fontSize: 9, color: '#6b7280', bold: true },
             coverSignatureLabel: { fontSize: 9, color: '#9ca3af', italics: true },
             headerOrg: { fontSize: 11, bold: true, color: BRAND_PRIMARY },
             headerSub: { fontSize: 9, color: '#374151' },
@@ -524,7 +533,15 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
         setIsDownloading(false);
       }
     },
-    [buildChartImages, formatPeriodText, getFilename, includeCharts, isDownloadEnabled, processData, selectedChartTypes]
+    [
+      buildChartImages,
+      formatPeriodText,
+      getFilename,
+      includeCharts,
+      isDownloadEnabled,
+      processData,
+      selectedChartTypes,
+    ]
   );
 
   const downloadWord = useCallback(
@@ -725,9 +742,17 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                           alignment: AlignmentType.RIGHT,
                           children: [
                             new TextRun({ text: 'Strona ', color: '6B7280', size: 14 }),
-                            new TextRun({ children: [PageNumber.CURRENT], color: '6B7280', size: 14 }),
+                            new TextRun({
+                              children: [PageNumber.CURRENT],
+                              color: '6B7280',
+                              size: 14,
+                            }),
                             new TextRun({ text: ' / ', color: '6B7280', size: 14 }),
-                            new TextRun({ children: [PageNumber.TOTAL_PAGES], color: '6B7280', size: 14 }),
+                            new TextRun({
+                              children: [PageNumber.TOTAL_PAGES],
+                              color: '6B7280',
+                              size: 14,
+                            }),
                           ],
                         }),
                       ],
@@ -765,8 +790,9 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
                   children: [
                     new TextRun({
                       text: 'Departament Gospodarki Morskiej i Żeglugi Śródlądowej',
+                      bold: true,
                       color: '6B7280',
-                      size: 18,
+                      size: 11,
                     }),
                   ],
                 }),
@@ -847,7 +873,15 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
         setIsDownloading(false);
       }
     },
-    [buildChartImages, formatPeriodText, getFilename, includeCharts, isDownloadEnabled, processData, selectedChartTypes]
+    [
+      buildChartImages,
+      formatPeriodText,
+      getFilename,
+      includeCharts,
+      isDownloadEnabled,
+      processData,
+      selectedChartTypes,
+    ]
   );
 
   const downloadReport = useCallback(
