@@ -1,6 +1,9 @@
 import { toast } from '@/components/ui/use-toast';
 import { formatNumber } from '@/lib/helpers/format-helpers';
-import { BRAND_PRIMARY } from '@/lib/helpers/report-download/constants';
+import {
+  BRAND_PRIMARY,
+  ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX,
+} from '@/lib/helpers/report-download/constants';
 import { buildMonthlyTableSections } from '@/lib/helpers/report-download/monthlyTables';
 import { PdfDocxBaseOptions } from '@/lib/helpers/report-download/types';
 import {
@@ -51,11 +54,9 @@ export async function exportDocx({
       includeCharts && selectedChartTypes.length > 0
         ? await buildChartImages(processedData, selectedChartTypes)
         : [];
-    const monthlySections = await buildMonthlyTableSections(
-      submittedPorts,
-      submittedCommodities,
-      endDate
-    );
+    const monthlySections = ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX
+      ? await buildMonthlyTableSections(submittedPorts, submittedCommodities, endDate)
+      : [];
 
     const [logoBytes, , headerLogoBytes] = await Promise.all([
       fetchImageAsUint8Array('/05_znak_uproszczony_kolor_biale_tlo.png'),
@@ -170,7 +171,7 @@ export async function exportDocx({
 
       const mkValueCell = (
         text: string,
-        alignment: AlignmentType,
+        alignment: (typeof AlignmentType)[keyof typeof AlignmentType],
         isTotalRow: boolean,
         bold = false
       ) =>

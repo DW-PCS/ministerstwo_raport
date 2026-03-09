@@ -1,5 +1,6 @@
 import { fetchPortsAction, fetchReportDataAction, ReportRow } from '@/actions/report';
 import { toast } from '@/components/ui/use-toast';
+import { expandSelectedPortsToBackendNames } from '@/lib/helpers/port-filters';
 import { HEADER_TEXT, MONTH_NAMES } from '@/lib/helpers/report-download/constants';
 import { ExportBaseOptions } from '@/lib/helpers/report-download/types';
 import {
@@ -43,8 +44,9 @@ export async function exportXlsx({
     const lastMonthIndex = referenceDate.getMonth();
 
     const allPorts = await fetchPortsAction();
+    const backendPortNames = expandSelectedPortsToBackendNames(submittedPorts, allPorts);
     const selectedAppClients: AppClientsTypes[] = allPorts.filter(port =>
-      submittedPorts.includes(port.name)
+      backendPortNames.includes(port.name)
     );
 
     if (selectedAppClients.length === 0) {

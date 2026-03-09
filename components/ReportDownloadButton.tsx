@@ -60,13 +60,13 @@ const ReportDownloadButton = ({ data, startDate, endDate }: ReportDownloadButton
           >
             Pobierz jako Word
           </DropdownMenuItem>
-          <DropdownMenuItem
+          {/* <DropdownMenuItem
             onClick={() => downloadReport('xlsx', startDate, endDate)}
             disabled={isDownloading}
             className="cursor-pointer hover:bg-light-gray"
           >
             Pobierz jako Excel
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

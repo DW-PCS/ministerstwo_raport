@@ -1,6 +1,11 @@
 import { toast } from '@/components/ui/use-toast';
 import { formatNumber } from '@/lib/helpers/format-helpers';
-import { BRAND_DARK, BRAND_LIGHT, BRAND_PRIMARY } from '@/lib/helpers/report-download/constants';
+import {
+  BRAND_DARK,
+  BRAND_LIGHT,
+  BRAND_PRIMARY,
+  ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX,
+} from '@/lib/helpers/report-download/constants';
 import { buildMonthlyTableSections } from '@/lib/helpers/report-download/monthlyTables';
 import { PdfDocxBaseOptions } from '@/lib/helpers/report-download/types';
 import { buildChartImages, fetchImageAsDataUrl } from '@/lib/helpers/report-download/visualUtils';
@@ -28,11 +33,9 @@ export async function exportPdf({
       includeCharts && selectedChartTypes.length > 0
         ? await buildChartImages(processedData, selectedChartTypes)
         : [];
-    const monthlySections = await buildMonthlyTableSections(
-      submittedPorts,
-      submittedCommodities,
-      endDate
-    );
+    const monthlySections = ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX
+      ? await buildMonthlyTableSections(submittedPorts, submittedCommodities, endDate)
+      : [];
 
     const [logoDataUrl, headerLogoDataUrl] = await Promise.all([
       fetchImageAsDataUrl('/05_znak_uproszczony_kolor_biale_tlo.png'),

@@ -20,3 +20,6 @@ export const MONTH_NAMES = [
 
 export const HEADER_TEXT =
   'Obroty łącznie z wagą środków transportu, na których przemieszczana jest drobnica w ruchu promowym';
+
+export const ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX =
+  process.env.NEXT_PUBLIC_ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX === 'true';
