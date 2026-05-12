@@ -12,7 +12,7 @@ interface MainPageProps {
 
 const MainPage = ({ ports, groups }: MainPageProps) => {
   const { generateReport, resetFilters, selectedPorts, selectedCommodities, startDate, endDate } = useRaportContext();
-  const { fetchProductGroupData, data, isLoading, resetData } = useReportData();
+  const { fetchProductGroupData, data, isLoading, resetData } = useReportData(ports);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

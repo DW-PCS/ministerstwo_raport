@@ -1,43 +1,35 @@
 'use client';
+import LoginDialog from '@/components/auth/LoginDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { normalizePolishText } from '@/lib/helpers';
 import Image from 'next/image';
+import { useState } from 'react';
 
 const Header = () => {
-  const { login, logout, isAuthenticated, user } = useAuth();
-
-  const displayName = normalizePolishText(user?.name || user?.preferred_username || 'Użytkowniku');
-  const userEmail = user?.preferred_username;
+  const { logout, isAuthenticated } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
 
   return (
-    <header className="max-w-5xl mx-auto bg-[#1a0069] text-white p-4 rounded-[25px] shadow-lg mt-4">
-      <div className="max-w-5xl mx-auto flex justify-between items-center">
-        <div className="flex items-center">
-          <Image
-            src="/polskipcs.svg"
-            alt="Polski PCS Logo"
-            width={112}
-            height={54}
-            className="h-12 w-auto"
-          />
-          <h1 className="text-[18px] font-bold ml-4">Generator Raportów</h1>
-        </div>
-        <div className="flex items-center gap-4">   
-          {isAuthenticated && (
-            <div className="text-right leading-tight">
-              <p className="text-xs">Witaj, {displayName}</p>
-              {userEmail && (
-                <p className="text-[11px] text-white/80">Zalogowano jako: {userEmail}</p>
-              )}
-            </div>
-          )}
+    <>
+      <header className="max-w-5xl mx-auto bg-[#1a0069] text-white p-4 rounded-[25px] shadow-lg mt-4">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
+          <div className="flex items-center">
+            <Image
+              src="/polskipcs.svg"
+              alt="Polski PCS Logo"
+              width={112}
+              height={54}
+              className="h-12 w-auto"
+            />
+            <h1 className="text-[18px] font-bold ml-4">Generator Raportów</h1>
+          </div>
           <AuthButton
-            callback={isAuthenticated ? logout : login}
+            callback={isAuthenticated ? logout : () => setShowLogin(true)}
             text={isAuthenticated ? 'Wyloguj' : 'Zaloguj'}
           />
         </div>
-      </div>
-    </header>
+      </header>
+      {showLogin && <LoginDialog onClose={() => setShowLogin(false)} />}
+    </>
   );
 };
 

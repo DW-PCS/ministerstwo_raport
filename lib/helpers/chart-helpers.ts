@@ -1,31 +1,16 @@
-import { allCommoditiesMap } from '@/lib/constants';
-
 export const processRawData = (rawData: Array<{ port: string; kod: string; ilosc: number }>) => {
   const result: Record<string, { [key: string]: number }> = {};
 
-  const portMapping = {
-    'Port Morski Gdańsk': 'Gdańsk',
-    'Port Morski Szczecin': 'Szczecin',
-    'Port Morski Świnoujście': 'Świnoujście',
-    'Port Morski Gdynia': 'Gdynia',
-  };
-
-  Object.values(portMapping).forEach(shortPortName => {
-    result[shortPortName] = {};
-  });
-
   rawData.forEach(item => {
-    const portName = portMapping[item.port as keyof typeof portMapping] || item.port;
+    const portName = item.port;
     const commodity = item.kod;
     const quantity = item.ilosc;
     if (!result[portName]) {
       result[portName] = {};
     }
-
     if (!result[portName][commodity]) {
       result[portName][commodity] = 0;
     }
-
     result[portName][commodity] += quantity;
   });
 
@@ -50,22 +35,12 @@ export const generateChartData = ({
   const processedData = processRawData(data);
 
   return ports.map(port => {
-    const portData: { name: string; [key: string]: unknown } = { name: port };
-
-    if (!processedData[port]) {
-      console.warn(`Port ${port} not found in processed data`);
-      return portData;
-    }
+    const portEntry: { name: string; [key: string]: unknown } = { name: port };
 
     selectedCommodities?.forEach(commodity => {
-      const commodityDisplayName = allCommoditiesMap[commodity] || commodity;
-      if (processedData[port] && processedData[port][commodity] !== undefined) {
-        portData[commodityDisplayName] = processedData[port][commodity];
-      } else {
-        portData[commodityDisplayName] = 0;
-      }
+      portEntry[commodity] = processedData[port]?.[commodity] ?? 0;
     });
 
-    return portData;
+    return portEntry;
   });
 };

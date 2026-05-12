@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import useRaportContext from '@/contexts/RaportContext';
-import { allCommoditiesMap, COLORS } from '@/lib/constants';
+import { COLORS } from '@/lib/constants';
 import { generateChartData } from '@/lib/helpers';
 import { formatNumber } from '@/lib/helpers/format-helpers';
 import { Tooltip as AntdTooltip } from 'antd';
@@ -19,30 +19,52 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Legend,
+  Pie,
+  PieChart,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
   XAxis,
   YAxis,
 } from 'recharts';
+
 interface ReportResultsProps {
   data: { port: string; kod: string; ilosc: number }[];
 }
 
 export default function ReportResults({ data }: ReportResultsProps) {
-  const { submittedCommodities, submittedPorts, isReportGenerated, startDate, endDate } =
-    useRaportContext();
-
-  const mappedCommodities = submittedCommodities.map(commodity => allCommoditiesMap[commodity]);
+  const {
+    submittedCommodities,
+    submittedPorts,
+    isReportGenerated,
+    startDate,
+    endDate,
+    selectedChartTypes,
+  } = useRaportContext();
 
   const chartData = generateChartData({
     ports: submittedPorts,
-    commodities: mappedCommodities,
+    commodities: submittedCommodities,
     data,
     selectedCommodities: submittedCommodities,
   });
   const commodityKeys =
     chartData.length >= 1 ? Object.keys(chartData[0]).filter(key => key !== 'name') : [];
+
+  const barByCommodityData = commodityKeys.map(commodity => {
+    const entry: { name: string; [key: string]: unknown } = { name: commodity };
+    submittedPorts.forEach(port => {
+      const portRow = chartData.find(r => r.name === port);
+      entry[port] = portRow ? Number(portRow[commodity] || 0) : 0;
+    });
+    return entry;
+  });
+
+  const pieData = commodityKeys.map(commodity => ({
+    name: commodity,
+    value: chartData.reduce((sum, port) => sum + Number(port[commodity] || 0), 0),
+  }));
 
   if (!isReportGenerated || !data || data.length === 0) {
     return (
@@ -81,9 +103,14 @@ export default function ReportResults({ data }: ReportResultsProps) {
                         Port
                       </TableHead>
                       {commodityKeys.map(key => (
-                        <TableHead key={key} className="text-right font-bold text-white border-r border-white/20 last:border-r-0">
+                        <TableHead
+                          key={key}
+                          className="text-right font-bold text-white border-r border-white/20 last:border-r-0"
+                        >
                           <AntdTooltip title={key}>
-                            <span className="inline-block max-w-30 truncate align-bottom">{key} [t]</span>
+                            <span className="inline-block max-w-30 truncate align-bottom">
+                              {key} [t]
+                            </span>
                           </AntdTooltip>
                         </TableHead>
                       ))}
@@ -95,9 +122,14 @@ export default function ReportResults({ data }: ReportResultsProps) {
                         key={String(port.name)}
                         className={`hover:bg-purple-50 border-black/20 ${rowIndex % 2 === 0 ? 'bg-[#f5f3ff]' : 'bg-white'}`}
                       >
-                        <TableCell className="font-medium border-r border-black/20">{String(port.name)}</TableCell>
+                        <TableCell className="font-medium border-r border-black/20">
+                          {String(port.name)}
+                        </TableCell>
                         {commodityKeys.map(key => (
-                          <TableCell key={key} className="text-right tabular-nums border-r border-black/20 last:border-r-0">
+                          <TableCell
+                            key={key}
+                            className="text-right tabular-nums border-r border-black/20 last:border-r-0"
+                          >
                             {formatNumber(Number(port[key] || 0))}
                           </TableCell>
                         ))}
@@ -106,43 +138,115 @@ export default function ReportResults({ data }: ReportResultsProps) {
                     <TableRow className="bg-[#e8e4f5] hover:bg-[#e8e4f5] border-black/20 font-bold">
                       <TableCell className="font-bold border-r border-black/20">SUMA</TableCell>
                       {commodityKeys.map(key => (
-                        <TableCell key={key} className="text-right tabular-nums font-bold border-r border-black/20 last:border-r-0">
-                          {formatNumber(chartData.reduce((sum, port) => sum + Number(port[key] || 0), 0))}
+                        <TableCell
+                          key={key}
+                          className="text-right tabular-nums font-bold border-r border-black/20 last:border-r-0"
+                        >
+                          {formatNumber(
+                            chartData.reduce((sum, port) => sum + Number(port[key] || 0), 0)
+                          )}
                         </TableCell>
                       ))}
                     </TableRow>
                   </TableBody>
                 </Table>
               </div>
-              <div className="my-10 border-b border border-black/20"> </div>
-              <div className="h-80 sm:p-6 bg-white border-b border-black/20 text-xs sm:text-base">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={chartData}
-                    margin={{
-                      top: 20,
-                      right: 30,
-                      left: 20,
-                      bottom: 5,
-                    }}
+
+              {selectedChartTypes.includes('bar_port') && (
+                <>
+                  <div className="px-6 pt-6 pb-2">
+                    <p className="text-sm font-semibold text-[#1a0069]">
+                      Wykres {selectedChartTypes.indexOf('bar_port') + 1}: Struktura ładunków wg portu
+                    </p>
+                  </div>
+                  <div className="h-80 sm:p-6 bg-white border-b border-black/20 text-xs sm:text-base">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={chartData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <RechartsTooltip />
+                        <Legend />
+                        {commodityKeys
+                          .filter(key => chartData[0][key] !== undefined)
+                          .map((commodityKey, index) => (
+                            <Bar
+                              key={commodityKey}
+                              dataKey={commodityKey}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
+
+              {selectedChartTypes.includes('bar_commodity') && (
+                <>
+                  <div className="px-6 pt-6 pb-2">
+                    <p className="text-sm font-semibold text-[#1a0069]">
+                      Wykres {selectedChartTypes.indexOf('bar_commodity') + 1}: Wolumen wg grupy towarowej i portu
+                    </p>
+                  </div>
+                  <div
+                    className="sm:px-6 bg-white border-b border-black/20 text-xs sm:text-base"
+                    style={{ height: `${barByCommodityData.length * 60 + 80}px` }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <RechartsTooltip />
-                    <Legend />
-                    {commodityKeys
-                      .filter(key => chartData[0][key] !== undefined)
-                      .map((commodityKey, index) => (
-                        <Bar
-                          key={commodityKey}
-                          dataKey={commodityKey}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        layout="vertical"
+                        data={barByCommodityData}
+                        margin={{ top: 20, right: 30, left: 80, bottom: 20 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis type="category" dataKey="name" width={80} />
+                        <RechartsTooltip />
+                        <Legend />
+                        {submittedPorts.map((port, index) => (
+                          <Bar key={port} dataKey={port} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
+
+              {selectedChartTypes.includes('pie') && (
+                <>
+                  <div className="px-6 pt-6 pb-2">
+                    <p className="text-sm font-semibold text-[#1a0069]">
+                      Wykres {selectedChartTypes.indexOf('pie') + 1}: Udział grup towarowych
+                    </p>
+                  </div>
+                  <div className="h-80 sm:p-6 bg-white border-b border-black/20 text-xs sm:text-base">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={110}
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          {pieData.map((_, index) => (
+                            <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <div className="text-center py-10 text-muted-foreground">
