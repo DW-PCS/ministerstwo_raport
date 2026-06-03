@@ -1,58 +1,51 @@
 # Deployment Instructions
 
-## Update application on server
+## Prerequisites (macOS)
 
-### Step 1 — Build new Docker image (laptop, PowerShell)
+- Docker Desktop is running
+- Doppler CLI is installed
+- Doppler CLI is authenticated (`doppler login`)
+- Doppler project/config is selected (`doppler setup --project ministerstwo --config prd_daniel`)
+- Docker Hub login is active (`docker login`)
 
-To run this comand you will need doker desktop open.
+## Step 1 — Build and push image (macOS)
 
-```powershell
-doppler run --project ministerstwo --config prd_daniel -- docker build `
-  --build-arg NEXT_PUBLIC_AZURE_AD_CLIENT_ID=$(doppler secrets get NEXT_PUBLIC_AZURE_AD_CLIENT_ID --plain --project ministerstwo --config prd_daniel) `
-  --build-arg NEXT_PUBLIC_AZURE_AD_SCOPE=$(doppler secrets get NEXT_PUBLIC_AZURE_AD_SCOPE --plain --project ministerstwo --config prd_daniel) `
-  --build-arg NEXT_PUBLIC_AZURE_AD_ENDPOINT=$(doppler secrets get NEXT_PUBLIC_AZURE_AD_ENDPOINT --plain --project ministerstwo --config prd_daniel) `
-  --build-arg NEXT_PUBLIC_AZURE_AD_TENANT_ID=$(doppler secrets get NEXT_PUBLIC_AZURE_AD_TENANT_ID --plain --project ministerstwo --config prd_daniel) `
-  --build-arg NEXT_PUBLIC_APP_URL=$(doppler secrets get NEXT_PUBLIC_APP_URL --plain --project ministerstwo --config prd_daniel) `
-  --build-arg NEXT_PUBLIC_ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX=$(doppler secrets get NEXT_PUBLIC_ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX --plain --project ministerstwo --config prd_daniel) `
-  -t thewicha/ministerstwo-app:latest .
+```bash
+doppler run --project ministerstwo --config prd_daniel -- sh -c '
+docker buildx build \
+  --platform linux/amd64 \
+  --build-arg NEXT_PUBLIC_AZURE_AD_CLIENT_ID="$NEXT_PUBLIC_AZURE_AD_CLIENT_ID" \
+  --build-arg NEXT_PUBLIC_AZURE_AD_SCOPE="$NEXT_PUBLIC_AZURE_AD_SCOPE" \
+  --build-arg NEXT_PUBLIC_AZURE_AD_ENDPOINT="$NEXT_PUBLIC_AZURE_AD_ENDPOINT" \
+  --build-arg NEXT_PUBLIC_AZURE_AD_TENANT_ID="$NEXT_PUBLIC_AZURE_AD_TENANT_ID" \
+  --build-arg NEXT_PUBLIC_APP_URL="$NEXT_PUBLIC_APP_URL" \
+  --build-arg NEXT_PUBLIC_ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX="$NEXT_PUBLIC_ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX" \
+  -t thewicha/ministerstwo-app:latest \
+  --push \
+  .
+'
 ```
 
-### Step 2 — Push to Docker Hub (laptop, PowerShell)
-
-```powershell
-docker push thewicha/ministerstwo-app:latest
-```
-
-### Step 3 — Deploy on server (SSH)
+## Step 2 — Deploy on server
 
 ```bash
 ssh daniel@74.248.33.80
 ```
 
 ```bash
-docker compose down && docker pull thewicha/ministerstwo-app:latest && doppler run --project ministerstwo --config prd_daniel -- docker compose up -d
+docker pull thewicha/ministerstwo-app:latest && doppler run --project ministerstwo --config prd_daniel -- sh -c 'docker compose down && docker compose up -d'
 ```
 
-### Step 4 — Verify
+## Step 3 — Verify
 
 ```bash
-docker compose ps
-docker compose logs -f
+doppler run --project ministerstwo --config prd_daniel -- docker compose ps
+doppler run --project ministerstwo --config prd_daniel -- docker compose logs -f
+curl -I http://localhost:3000
 ```
 
-App runs at: http://74.248.33.80:3000 || https://raportymi.polskipcs.pl/
-
----
-
-## Secrets management (doppler.com)
-
-- `NEXTAUTH_SECRET` — NextAuth secret key
-- `NEXTAUTH_URL` — public URL of the app
-- `NEXT_PUBLIC_ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX` — `true` adds monthly sections to PDF and Word exports
-
-To update secrets: log in to doppler.com → project → production environment.
-No changes needed on the server after updating secrets — restart container:
+## Public URL
 
 ```bash
-doppler run --project ministerstwo --config prd_daniel -- docker compose up -d
+curl -I https://raportymi.polskipcs.pl/
 ```
