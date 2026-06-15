@@ -1,5 +1,6 @@
 import { getServerAuthSession } from '@/actions/authCookies';
 import Header from '@/components/Header';
+import ScrollToTop from '@/components/ScrollToTop';
 import { Toaster } from '@/components/ui/toaster';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
@@ -37,6 +38,7 @@ export default async function RootLayout({
           <Header />
           {children}
           <Toaster />
+          <ScrollToTop />
         </ClinetProviders>
       </body>
     </html>

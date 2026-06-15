@@ -40,6 +40,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
     isReportGenerated,
     startDate,
     endDate,
+    includeCharts,
     selectedChartTypes,
   } = useRaportContext();
 
@@ -71,14 +72,18 @@ export default function ReportResults({ data }: ReportResultsProps) {
     ),
   }));
 
-  const formatMassTick = (value: number | string) =>
-    formatNumber(Number(value || 0));
+  const formatCompactTick = (value: number | string) => {
+    const num = Number(value || 0);
+    if (num >= 1_000_000) return `${+(num / 1_000_000).toFixed(1)} mln`;
+    if (num >= 1_000) return `${+(num / 1_000).toFixed(0)} tys`;
+    return String(num);
+  };
   const formatMassTooltip = (value: number | string) =>
     `${formatNumber(Number(value || 0))} t`;
 
   if (!isReportGenerated || !data || data.length === 0) {
     return (
-      <Card className="shadow-lg rounded-2xl overflow-hidden border-0 bg-white">
+      <Card id="report-results" className="shadow-lg rounded-2xl overflow-hidden border-0 bg-white">
         <CardContent className="p-6">
           <div className="text-center py-10 text-muted-foreground">
             Wybierz co najmniej jeden port i jedną grupę towarową, aby
@@ -90,7 +95,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
   }
 
   return (
-    <Card className="shadow-lg rounded-2xl overflow-hidden border-0">
+    <Card id="report-results" className="shadow-lg rounded-2xl overflow-hidden border-0">
       <CardHeader className="border-b bg-white flex flex-col sm:flex-row justify-between items-center border-black/20">
         <div>
           <CardTitle className="text-xl font-semibold">
@@ -113,22 +118,20 @@ export default function ReportResults({ data }: ReportResultsProps) {
         <div>
           {chartData.length > 0 ? (
             <>
-              <div className="overflow-x-auto">
-                <Table>
+              <div className="overflow-x-auto px-6 py-4">
+                <Table className="w-auto">
                   <TableHeader>
                     <TableRow className="bg-[#1a0069] hover:bg-[#1a0069]">
-                      <TableHead className="font-bold text-white border-r border-white/20">
+                      <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">
                         Port
                       </TableHead>
                       {commodityKeys.map((key) => (
                         <TableHead
                           key={key}
-                          className="text-right font-bold text-white border-r border-white/20 last:border-r-0"
+                          className="text-right font-bold text-white border-r border-white/20 last:border-r-0 whitespace-nowrap"
                         >
                           <AntdTooltip title={key}>
-                            <span className="inline-block max-w-30 truncate align-bottom">
-                              {key} [t]
-                            </span>
+                            <span>{key} [t]</span>
                           </AntdTooltip>
                         </TableHead>
                       ))}
@@ -140,13 +143,13 @@ export default function ReportResults({ data }: ReportResultsProps) {
                         key={String(port.name)}
                         className={`hover:bg-purple-50 border-black/20 ${rowIndex % 2 === 0 ? "bg-[#f5f3ff]" : "bg-white"}`}
                       >
-                        <TableCell className="font-medium border-r border-black/20">
+                        <TableCell className="font-medium border-r border-black/20 whitespace-nowrap">
                           {String(port.name)}
                         </TableCell>
                         {commodityKeys.map((key) => (
                           <TableCell
                             key={key}
-                            className="text-right tabular-nums border-r border-black/20 last:border-r-0"
+                            className="text-right tabular-nums border-r border-black/20 last:border-r-0 whitespace-nowrap"
                           >
                             {formatNumber(Number(port[key] || 0))}
                           </TableCell>
@@ -154,13 +157,13 @@ export default function ReportResults({ data }: ReportResultsProps) {
                       </TableRow>
                     ))}
                     <TableRow className="bg-[#e8e4f5] hover:bg-[#e8e4f5] border-black/20 font-bold">
-                      <TableCell className="font-bold border-r border-black/20">
+                      <TableCell className="font-bold border-r border-black/20 whitespace-nowrap">
                         SUMA
                       </TableCell>
                       {commodityKeys.map((key) => (
                         <TableCell
                           key={key}
-                          className="text-right tabular-nums font-bold border-r border-black/20 last:border-r-0"
+                          className="text-right tabular-nums font-bold border-r border-black/20 last:border-r-0 whitespace-nowrap"
                         >
                           {formatNumber(
                             chartData.reduce(
@@ -175,7 +178,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                 </Table>
               </div>
 
-              {selectedChartTypes.includes("bar_port") && (
+              {includeCharts && selectedChartTypes.includes("bar_port") && (
                 <>
                   <div className="px-6 pt-6 pb-2">
                     <p className="text-sm font-semibold text-[#1a0069]">
@@ -187,11 +190,11 @@ export default function ReportResults({ data }: ReportResultsProps) {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={chartData}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        margin={{ top: 20, right: 30, left: 10, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis tickFormatter={formatMassTick} />
+                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                        <YAxis tickFormatter={formatCompactTick} tick={{ fontSize: 12 }} width={60} />
                         <RechartsTooltip
                           formatter={(value) =>
                             formatMassTooltip(value as number)
@@ -213,7 +216,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                 </>
               )}
 
-              {selectedChartTypes.includes("bar_commodity") && (
+              {includeCharts && selectedChartTypes.includes("bar_commodity") && (
                 <>
                   <div className="px-6 pt-6 pb-2">
                     <p className="text-sm font-semibold text-[#1a0069]">
@@ -234,8 +237,8 @@ export default function ReportResults({ data }: ReportResultsProps) {
                         margin={{ top: 20, right: 30, left: 80, bottom: 20 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" tickFormatter={formatMassTick} />
-                        <YAxis type="category" dataKey="name" width={80} />
+                        <XAxis type="number" tickFormatter={formatCompactTick} tick={{ fontSize: 12 }} />
+                        <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 12 }} />
                         <RechartsTooltip
                           formatter={(value) =>
                             formatMassTooltip(value as number)
@@ -255,7 +258,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                 </>
               )}
 
-              {selectedChartTypes.includes("pie") && (
+              {includeCharts && selectedChartTypes.includes("pie") && (
                 <>
                   <div className="px-6 pt-6 pb-2">
                     <p className="text-sm font-semibold text-[#1a0069]">
@@ -263,7 +266,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                       grup towarowych [t]
                     </p>
                   </div>
-                  <div className="h-80 sm:p-6 bg-white border-b border-black/20 text-xs sm:text-base">
+                  <div className="h-[480px] sm:p-6 bg-white border-b border-black/20 text-xs sm:text-base">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -271,8 +274,8 @@ export default function ReportResults({ data }: ReportResultsProps) {
                           dataKey="value"
                           nameKey="name"
                           cx="50%"
-                          cy="50%"
-                          outerRadius={110}
+                          cy="45%"
+                          outerRadius={160}
                           startAngle={90}
                           endAngle={-270}
                         >
