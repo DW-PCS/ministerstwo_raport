@@ -3,10 +3,9 @@
 ## Prerequisites (macOS)
 
 - Docker Desktop is running
-- Doppler CLI is installed
+- Login to Docker Hub (`docker login -u thewicha`)
 - Doppler CLI is authenticated (`doppler login`)
 - Doppler project/config is selected (`doppler setup --project ministerstwo --config prd_daniel`)
-- Docker Hub login is active (`docker login`)
 
 ## Step 1 — Build and push image (macOS)
 

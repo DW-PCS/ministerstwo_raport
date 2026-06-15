@@ -1,5 +1,5 @@
 import { ChartType } from '@/contexts/RaportContext';
-import { BRAND_ACCENT, BRAND_PRIMARY } from '@/lib/helpers/report-download/constants';
+import { COLORS } from '@/lib/constants';
 import { ProcessedData } from '@/lib/helpers/report-download/types';
 import Chart from 'chart.js/auto';
 
@@ -68,7 +68,7 @@ export async function buildChartImages(
     ports.reduce((sum, port) => sum + (processedData.portData[port][commodity] || 0), 0)
   );
 
-  const palette = [BRAND_PRIMARY, BRAND_ACCENT, '#0f766e', '#7c3aed', '#b45309', '#be185d'];
+  const palette = COLORS;
   const chartFontSize = 14;
   const chartLegendFontSize = 18;
 
