@@ -120,11 +120,10 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
         } else if (format === 'xlsx') {
           await exportXlsx({
             isDownloadEnabled,
+            processData,
             getFilename,
             startDate,
             endDate,
-            submittedPorts,
-            submittedCommodities,
           });
         }
       } finally {
