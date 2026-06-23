@@ -17,6 +17,7 @@ const CHART_OPTIONS: { type: ChartType; label: string }[] = [
   { type: 'bar_port', label: 'Słupkowy – struktura wg portu' },
   { type: 'bar_commodity', label: 'Słupkowy – wolumen wg grupy towarowej' },
   { type: 'pie', label: 'Kołowy – udział grup towarowych' },
+  { type: 'bar_timeseries', label: 'Kolumnowy – obroty wg miesiąca (linia trendu)' },
 ];
 
 const PeriodSelects = ({ isLoading, onReset }: PeriodSelectsProps) => {

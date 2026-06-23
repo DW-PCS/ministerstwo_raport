@@ -2,6 +2,15 @@
 
 import ReportDownloadButton from "@/components/ReportDownloadButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -14,13 +23,19 @@ import useRaportContext from "@/contexts/RaportContext";
 import { COLORS } from "@/lib/constants";
 import { generateChartData } from "@/lib/helpers";
 import { formatNumber } from "@/lib/helpers/format-helpers";
+import { MONTH_NAMES } from "@/lib/helpers/report-download/constants";
+import { calculateTrend, TrendType } from "@/lib/helpers/trend-helpers";
 import { Tooltip as AntdTooltip } from "antd";
+import { AnimatePresence, motion } from "framer-motion";
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
   Legend,
+  Line,
   Pie,
   PieChart,
   Tooltip as RechartsTooltip,
@@ -29,8 +44,32 @@ import {
   YAxis,
 } from "recharts";
 
+const MONTH_ABBR = [
+  "sty",
+  "lut",
+  "mar",
+  "kwi",
+  "maj",
+  "cze",
+  "lip",
+  "sie",
+  "wrz",
+  "paź",
+  "lis",
+  "gru",
+];
+
+const TREND_OPTIONS: { value: TrendType; label: string }[] = [
+  { value: "linear", label: "Liniowy" },
+  { value: "logarithmic", label: "Logarytmiczny" },
+  { value: "polynomial", label: "Wielomianowy (st. 2)" },
+  { value: "power", label: "Potęgowy" },
+  { value: "exponential", label: "Wykładniczy" },
+  { value: "movingAverage", label: "Średnia krocząca" },
+];
+
 interface ReportResultsProps {
-  data: { port: string; kod: string; ilosc: number }[];
+  data: { port: string; kod: string; ilosc: number; reportDate?: string }[];
 }
 
 export default function ReportResults({ data }: ReportResultsProps) {
@@ -42,6 +81,10 @@ export default function ReportResults({ data }: ReportResultsProps) {
     endDate,
     includeCharts,
     selectedChartTypes,
+    showTrendLine,
+    trendType,
+    setShowTrendLine,
+    setTrendType,
   } = useRaportContext();
 
   const chartData = generateChartData({
@@ -72,10 +115,47 @@ export default function ReportResults({ data }: ReportResultsProps) {
     ),
   }));
 
+  const timeSeriesData = useMemo(() => {
+    const monthly: Record<string, number> = {};
+    data.forEach((row) => {
+      if (!row.reportDate) return;
+      const yearMonth = row.reportDate.slice(0, 7);
+      monthly[yearMonth] = (monthly[yearMonth] || 0) + row.ilosc;
+    });
+    return Object.entries(monthly)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, total]) => {
+        const parts = date.split("-");
+        const monthIndex = parseInt(parts[1] ?? "1", 10) - 1;
+        const year = parts[0] ?? "";
+        return {
+          month: `${MONTH_ABBR[monthIndex] ?? MONTH_NAMES[monthIndex] ?? parts[1]} ${year}`,
+          total,
+        };
+      });
+  }, [data]);
+
+  const trendResult = useMemo(() => {
+    if (!showTrendLine || timeSeriesData.length < 2) return null;
+    return calculateTrend(
+      timeSeriesData.map((d) => d.total),
+      trendType,
+    );
+  }, [showTrendLine, timeSeriesData, trendType]);
+
+  const timeSeriesChartData = useMemo(
+    () =>
+      timeSeriesData.map((d, i) => ({
+        ...d,
+        trendValue: trendResult ? trendResult.trendPoints[i] : undefined,
+      })),
+    [timeSeriesData, trendResult],
+  );
+
   const formatCompactTick = (value: number | string) => {
     const num = Number(value || 0);
-    if (num >= 1_000_000) return `${+(num / 1_000_000).toFixed(1)} mln`;
-    if (num >= 1_000) return `${+(num / 1_000).toFixed(0)} tys`;
+    if (num >= 1_000_000) return `${+(num / 1_000_000).toFixed(1)} mln`;
+    if (num >= 1_000) return `${+(num / 1_000).toFixed(0)} tys`;
     return String(num);
   };
   const formatMassTooltip = (value: number | string) =>
@@ -83,7 +163,10 @@ export default function ReportResults({ data }: ReportResultsProps) {
 
   if (!isReportGenerated || !data || data.length === 0) {
     return (
-      <Card id="report-results" className="shadow-lg rounded-2xl overflow-hidden border-0 bg-white">
+      <Card
+        id="report-results"
+        className="shadow-lg rounded-2xl overflow-hidden border-0 bg-white"
+      >
         <CardContent className="p-6">
           <div className="text-center py-10 text-muted-foreground">
             Wybierz co najmniej jeden port i jedną grupę towarową, aby
@@ -95,7 +178,10 @@ export default function ReportResults({ data }: ReportResultsProps) {
   }
 
   return (
-    <Card id="report-results" className="shadow-lg rounded-2xl overflow-hidden border-0">
+    <Card
+      id="report-results"
+      className="shadow-lg rounded-2xl overflow-hidden border-0"
+    >
       <CardHeader className="border-b bg-white flex flex-col sm:flex-row justify-between items-center border-black/20">
         <div>
           <CardTitle className="text-xl font-semibold">
@@ -194,7 +280,11 @@ export default function ReportResults({ data }: ReportResultsProps) {
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis tickFormatter={formatCompactTick} tick={{ fontSize: 12 }} width={60} />
+                        <YAxis
+                          tickFormatter={formatCompactTick}
+                          tick={{ fontSize: 12 }}
+                          width={60}
+                        />
                         <RechartsTooltip
                           formatter={(value) =>
                             formatMassTooltip(value as number)
@@ -216,47 +306,57 @@ export default function ReportResults({ data }: ReportResultsProps) {
                 </>
               )}
 
-              {includeCharts && selectedChartTypes.includes("bar_commodity") && (
-                <>
-                  <div className="px-6 pt-6 pb-2">
-                    <p className="text-sm font-semibold text-[#1a0069]">
-                      Wykres {selectedChartTypes.indexOf("bar_commodity") + 1}:
-                      Wolumen wg grupy towarowej i portu [t]
-                    </p>
-                  </div>
-                  <div
-                    className="sm:px-6 bg-white border-b border-black/20 text-xs sm:text-base"
-                    style={{
-                      height: `${barByCommodityData.length * 60 + 80}px`,
-                    }}
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        layout="vertical"
-                        data={barByCommodityData}
-                        margin={{ top: 20, right: 30, left: 80, bottom: 20 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" tickFormatter={formatCompactTick} tick={{ fontSize: 12 }} />
-                        <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 12 }} />
-                        <RechartsTooltip
-                          formatter={(value) =>
-                            formatMassTooltip(value as number)
-                          }
-                        />
-                        <Legend />
-                        {submittedPorts.map((port, index) => (
-                          <Bar
-                            key={port}
-                            dataKey={port}
-                            fill={COLORS[index % COLORS.length]}
+              {includeCharts &&
+                selectedChartTypes.includes("bar_commodity") && (
+                  <>
+                    <div className="px-6 pt-6 pb-2">
+                      <p className="text-sm font-semibold text-[#1a0069]">
+                        Wykres {selectedChartTypes.indexOf("bar_commodity") + 1}
+                        : Wolumen wg grupy towarowej i portu [t]
+                      </p>
+                    </div>
+                    <div
+                      className="sm:px-6 bg-white border-b border-black/20 text-xs sm:text-base"
+                      style={{
+                        height: `${barByCommodityData.length * 60 + 80}px`,
+                      }}
+                    >
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          layout="vertical"
+                          data={barByCommodityData}
+                          margin={{ top: 20, right: 30, left: 80, bottom: 20 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            type="number"
+                            tickFormatter={formatCompactTick}
+                            tick={{ fontSize: 12 }}
                           />
-                        ))}
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </>
-              )}
+                          <YAxis
+                            type="category"
+                            dataKey="name"
+                            width={90}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <RechartsTooltip
+                            formatter={(value) =>
+                              formatMassTooltip(value as number)
+                            }
+                          />
+                          <Legend />
+                          {submittedPorts.map((port, index) => (
+                            <Bar
+                              key={port}
+                              dataKey={port}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                )}
 
               {includeCharts && selectedChartTypes.includes("pie") && (
                 <>
@@ -297,6 +397,171 @@ export default function ReportResults({ data }: ReportResultsProps) {
                   </div>
                 </>
               )}
+
+              {includeCharts &&
+                selectedChartTypes.includes("bar_timeseries") && (
+                  <>
+                    <div className="px-6 pt-6 pb-2 flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-[#1a0069]">
+                        Wykres{" "}
+                        {selectedChartTypes.indexOf("bar_timeseries") + 1}:
+                        Obroty łącznie wg miesiąca [t]
+                      </p>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="trend-line-toggle"
+                            checked={showTrendLine}
+                            onCheckedChange={(checked) =>
+                              setShowTrendLine(Boolean(checked))
+                            }
+                          />
+                          <Label
+                            htmlFor="trend-line-toggle"
+                            className="cursor-pointer text-xs font-medium"
+                          >
+                            Dodaj linię trendu
+                          </Label>
+                        </div>
+                        <AnimatePresence initial={false}>
+                          {showTrendLine && (
+                            <motion.div
+                              key="trend-type-select"
+                              initial={{ opacity: 0, width: 0 }}
+                              animate={{ opacity: 1, width: "auto" }}
+                              exit={{ opacity: 0, width: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <Select
+                                value={trendType}
+                                onValueChange={(v) =>
+                                  setTrendType(v as TrendType)
+                                }
+                              >
+                                <SelectTrigger className="h-7 text-xs w-48 border-[#1a0069]/30">
+                                  <SelectValue placeholder="Typ trendu" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white">
+                                  {TREND_OPTIONS.map((opt) => (
+                                    <SelectItem
+                                      key={opt.value}
+                                      value={opt.value}
+                                      className="text-xs cursor-pointer"
+                                    >
+                                      {opt.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+
+                    {timeSeriesData.length < 2 ? (
+                      <div className="px-6 pb-4 text-xs text-muted-foreground">
+                        Za mało danych miesięcznych do wyświetlenia wykresu
+                        szeregów czasowych.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="h-80 sm:p-6 bg-white border-b border-black/20 text-xs sm:text-base">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart
+                              data={timeSeriesChartData}
+                              margin={{
+                                top: 20,
+                                right: 30,
+                                left: 10,
+                                bottom: 5,
+                              }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                              <YAxis
+                                tickFormatter={formatCompactTick}
+                                tick={{ fontSize: 12 }}
+                                width={60}
+                              />
+                              <RechartsTooltip
+                                formatter={(value, name) => {
+                                  if (name === "trendValue")
+                                    return [
+                                      formatMassTooltip(
+                                        Math.round((value as number) * 100) / 100,
+                                      ),
+                                      "Linia trendu",
+                                    ];
+                                  return [
+                                    formatMassTooltip(value as number),
+                                    "Obroty",
+                                  ];
+                                }}
+                              />
+                              <Legend
+                                formatter={(value) =>
+                                  value === "trendValue"
+                                    ? "Linia trendu"
+                                    : "Obroty [t]"
+                                }
+                              />
+                              <Bar
+                                dataKey="total"
+                                name="total"
+                                fill={COLORS[0]}
+                              />
+                              {showTrendLine && trendResult && (
+                                <Line
+                                  type="monotone"
+                                  dataKey="trendValue"
+                                  stroke="#e63946"
+                                  strokeWidth={2}
+                                  dot={false}
+                                  strokeDasharray="6 3"
+                                />
+                              )}
+                            </ComposedChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        <AnimatePresence initial={false}>
+                          {showTrendLine && trendResult && (
+                            <motion.div
+                              key="trend-info"
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="px-6 py-3 bg-[#f5f3ff] border-b border-black/10 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+                                {trendResult.r2 !== null && (
+                                  <span>
+                                    <span className="font-semibold text-[#1a0069]">
+                                      R²
+                                    </span>{" "}
+                                    ={" "}
+                                    <span className="tabular-nums">
+                                      {trendResult.r2.toFixed(4)}
+                                    </span>
+                                  </span>
+                                )}
+                                <span>
+                                  <span className="font-semibold text-[#1a0069]">
+                                    Równanie:
+                                  </span>{" "}
+                                  {trendResult.equation}
+                                </span>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    )}
+                  </>
+                )}
             </>
           ) : (
             <div className="text-center py-10 text-muted-foreground">

@@ -10,7 +10,7 @@ import ReportResults from './ReportResults';
 interface ReportGeneratorProps {
   ports: AppClientsTypes[];
   groups: string[];
-  data: { port: string; kod: string; ilosc: number }[];
+  data: { port: string; kod: string; ilosc: number; reportDate?: string }[];
   isLoading?: boolean;
   onReset: () => void;
 }

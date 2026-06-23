@@ -1,9 +1,11 @@
 'use client';
 
 import { halfYearType, monthTypes, periodType, quarterTypes } from '@/components/selectors';
+import { TrendType } from '@/lib/helpers/trend-helpers';
 import { createContext, ReactNode, useContext, useState } from 'react';
 
-export type ChartType = 'bar_port' | 'bar_commodity' | 'pie';
+export type ChartType = 'bar_port' | 'bar_commodity' | 'pie' | 'bar_timeseries';
+export type { TrendType };
 
 type RaportContextType = {
   selectedPorts: string[];
@@ -20,6 +22,8 @@ type RaportContextType = {
   submittedCommodities: string[];
   includeCharts: boolean;
   selectedChartTypes: ChartType[];
+  showTrendLine: boolean;
+  trendType: TrendType;
   handlePortChange: (port: string, checked: boolean) => void;
   handleCommodityChange: (commodity: string, checked: boolean) => void;
   setPeriodType: (type: periodType) => void;
@@ -31,6 +35,8 @@ type RaportContextType = {
   setYear: (year: string) => void;
   setIncludeCharts: (value: boolean) => void;
   toggleChartType: (type: ChartType) => void;
+  setShowTrendLine: (value: boolean) => void;
+  setTrendType: (type: TrendType) => void;
   resetFilters: () => void;
   generateReport: () => void;
 };
@@ -50,6 +56,8 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
   const [isReportGenerated, setIsReportGenerated] = useState(false);
   const [includeCharts, setIncludeCharts] = useState(false);
   const [selectedChartTypes, setSelectedChartTypes] = useState<ChartType[]>([]);
+  const [showTrendLine, setShowTrendLine] = useState(false);
+  const [trendType, setTrendType] = useState<TrendType>('linear');
 
   const [submittedPorts, setSubmittedPorts] = useState<string[]>([]);
   const [submittedCommodities, setSubmittedCommodities] = useState<string[]>([]);
@@ -93,6 +101,8 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
     setIsReportGenerated(false);
     setIncludeCharts(false);
     setSelectedChartTypes([]);
+    setShowTrendLine(false);
+    setTrendType('linear');
   };
 
   const generateReport = () => {
@@ -116,6 +126,8 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
     submittedCommodities,
     includeCharts,
     selectedChartTypes,
+    showTrendLine,
+    trendType,
     handlePortChange,
     handleCommodityChange,
     setPeriodType,
@@ -129,6 +141,8 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
     setYear,
     setIncludeCharts,
     toggleChartType,
+    setShowTrendLine,
+    setTrendType,
   };
 
   return <RaportContext.Provider value={value}>{children}</RaportContext.Provider>;
