@@ -2,7 +2,7 @@
 import RaportGenerator from "@/components/pages/RaportGenerator";
 import useRaportContext from "@/contexts/RaportContext";
 import useReportData from "@/hooks/useReportData";
-import { AppClientsTypes } from "@/lib/types";
+import type { AppClientsTypes } from "@/types";
 import { toast } from "sonner";
 
 interface MainPageProps {

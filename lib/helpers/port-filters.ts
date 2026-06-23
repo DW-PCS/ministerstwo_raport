@@ -1,7 +1,5 @@
-import { AppClientsTypes } from '@/lib/types';
-
-export const SZCZECIN_SWINOUJSCIE_OPTION = 'Szczecin i Świnoujście';
-export const GDYNIA_OPTION = 'Gdynia';
+import type { AppClientsTypes } from '@/types';
+import { GDYNIA_OPTION, SZCZECIN_SWINOUJSCIE_OPTION } from '@/constants';
 
 export interface PortOption {
   id: string;
@@ -20,7 +18,7 @@ interface BasicReportRow {
 function normalizePortName(value: string): string {
   return value
     .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .trim()
     .toLowerCase();
 }

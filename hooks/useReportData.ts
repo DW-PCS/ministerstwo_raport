@@ -1,21 +1,14 @@
 'use client';
 
-import { fetchReportDataAction } from '@/actions/report';
+import { fetchReportDataAction, ReportRow } from '@/actions/report';
 import useRaportContext from '@/contexts/RaportContext';
 import {
   aggregateReportRowsForPresentation,
   expandSelectedPortsToBackendNames,
 } from '@/lib/helpers/port-filters';
-import { AppClientsTypes } from '@/lib/types';
+import type { AppClientsTypes } from '@/types';
 import { format } from 'date-fns';
 import { useState } from 'react';
-
-type ReportRow = {
-  port: string;
-  kod: string;
-  ilosc: number;
-  reportDate?: string;
-};
 
 const useReportData = (allPorts: AppClientsTypes[]) => {
   const { selectedPorts, selectedCommodities, startDate, endDate } = useRaportContext();

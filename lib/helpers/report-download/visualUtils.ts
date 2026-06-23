@@ -1,5 +1,5 @@
-import { ChartType, TrendType } from '@/contexts/RaportContext';
-import { COLORS } from '@/lib/constants';
+import type { ChartType, TrendType } from '@/types';
+import { COLORS } from '@/constants';
 import { MONTH_NAMES } from '@/lib/helpers/report-download/constants';
 import { ProcessedData } from '@/lib/helpers/report-download/types';
 import { calculateTrend } from '@/lib/helpers/trend-helpers';

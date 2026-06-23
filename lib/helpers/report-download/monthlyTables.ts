@@ -7,7 +7,7 @@ import {
   normalizeLabel,
   percentValue,
 } from '@/lib/helpers/report-download/utils';
-import { AppClientsTypes } from '@/lib/types';
+import type { AppClientsTypes } from '@/types';
 
 interface PortGroup {
   clients: AppClientsTypes[];

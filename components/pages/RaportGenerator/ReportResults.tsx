@@ -20,14 +20,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import useRaportContext from "@/contexts/RaportContext";
-import { COLORS } from "@/lib/constants";
-import { generateChartData } from "@/lib/helpers";
+import { COLORS, TREND_OPTIONS } from "@/constants";
 import { formatNumber } from "@/lib/helpers/format-helpers";
-import { MONTH_NAMES } from "@/lib/helpers/report-download/constants";
-import { calculateTrend, TrendType } from "@/lib/helpers/trend-helpers";
+import { useReportCharts } from "@/hooks/useReportCharts";
+import type { ReportRow } from "@/actions/report";
 import { Tooltip as AntdTooltip } from "antd";
 import { AnimatePresence, motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Bar,
   BarChart,
@@ -43,39 +42,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-
-const MONTH_ABBR = [
-  "sty",
-  "lut",
-  "mar",
-  "kwi",
-  "maj",
-  "cze",
-  "lip",
-  "sie",
-  "wrz",
-  "paź",
-  "lis",
-  "gru",
-];
-
-const TREND_OPTIONS: { value: TrendType; label: string }[] = [
-  { value: "linear", label: "Liniowy" },
-  { value: "logarithmic", label: "Logarytmiczny" },
-  { value: "polynomial", label: "Wielomianowy (st. 2)" },
-  { value: "power", label: "Potęgowy" },
-  { value: "exponential", label: "Wykładniczy" },
-  { value: "movingAverage", label: "Średnia krocząca" },
-];
+import type { TrendType } from "@/types";
 
 interface ReportResultsProps {
-  data: { port: string; kod: string; ilosc: number; reportDate?: string }[];
+  data: ReportRow[];
 }
 
 export default function ReportResults({ data }: ReportResultsProps) {
   const {
-    submittedCommodities,
-    submittedPorts,
     isReportGenerated,
     startDate,
     endDate,
@@ -83,113 +57,26 @@ export default function ReportResults({ data }: ReportResultsProps) {
     selectedChartTypes,
     showTrendLine,
     trendType,
+    submittedPorts,
     setShowTrendLine,
     setTrendType,
   } = useRaportContext();
 
   const [showMathDetails, setShowMathDetails] = useState(false);
 
-  const chartData = generateChartData({
-    ports: submittedPorts,
-    commodities: submittedCommodities,
-    data,
-    selectedCommodities: submittedCommodities,
-  });
-  const commodityKeys =
-    chartData.length >= 1
-      ? Object.keys(chartData[0]).filter((key) => key !== "name")
-      : [];
-
-  const barByCommodityData = commodityKeys.map((commodity) => {
-    const entry: { name: string; [key: string]: unknown } = { name: commodity };
-    submittedPorts.forEach((port) => {
-      const portRow = chartData.find((r) => r.name === port);
-      entry[port] = portRow ? Number(portRow[commodity] || 0) : 0;
-    });
-    return entry;
-  });
-
-  const pieData = commodityKeys.map((commodity) => ({
-    name: commodity,
-    value: chartData.reduce(
-      (sum, port) => sum + Number(port[commodity] || 0),
-      0,
-    ),
-  }));
-
-  const timeSeriesData = useMemo(() => {
-    const monthly: Record<string, number> = {};
-    data.forEach((row) => {
-      if (!row.reportDate) return;
-      const yearMonth = row.reportDate.slice(0, 7);
-      monthly[yearMonth] = (monthly[yearMonth] || 0) + row.ilosc;
-    });
-    return Object.entries(monthly)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, total]) => {
-        const parts = date.split("-");
-        const monthIndex = parseInt(parts[1] ?? "1", 10) - 1;
-        const year = parts[0] ?? "";
-        return {
-          month: `${MONTH_ABBR[monthIndex] ?? MONTH_NAMES[monthIndex] ?? parts[1]} ${year}`,
-          total,
-        };
-      });
-  }, [data]);
-
-  const trendResult = useMemo(() => {
-    if (!showTrendLine || timeSeriesData.length < 2) return null;
-    return calculateTrend(
-      timeSeriesData.map((d) => d.total),
-      trendType,
-    );
-  }, [showTrendLine, timeSeriesData, trendType]);
-
-  const timeSeriesChartData = useMemo(
-    () =>
-      timeSeriesData.map((d, i) => ({
-        ...d,
-        trendValue: trendResult ? trendResult.trendPoints[i] : undefined,
-      })),
-    [timeSeriesData, trendResult],
-  );
-
-  const mathTableRows = useMemo(() => {
-    if (!trendResult) return [];
-    const yMean =
-      timeSeriesData.reduce((s, d) => s + d.total, 0) / timeSeriesData.length;
-    return timeSeriesData.map((d, i) => {
-      const yHat = trendResult.trendPoints[i] ?? 0;
-      const residual = d.total - yHat;
-      return {
-        period: i + 1,
-        month: d.month,
-        y: d.total,
-        yHat,
-        residual,
-        residual2: residual ** 2,
-        devFromMean2: (d.total - yMean) ** 2,
-      };
-    });
-  }, [trendResult, timeSeriesData]);
-
-  const mathSummary = useMemo(() => {
-    if (!mathTableRows.length) return null;
-    const sse = mathTableRows.reduce((s, r) => s + r.residual2, 0);
-    const sst = mathTableRows.reduce((s, r) => s + r.devFromMean2, 0);
-    const yMean =
-      timeSeriesData.reduce((s, d) => s + d.total, 0) / timeSeriesData.length;
-    return { sse, sst, r2: sst > 0 ? 1 - sse / sst : null, yMean };
-  }, [mathTableRows, timeSeriesData]);
-
-  const formatCompactTick = (value: number | string) => {
-    const num = Number(value || 0);
-    if (num >= 1_000_000) return `${+(num / 1_000_000).toFixed(1)} mln`;
-    if (num >= 1_000) return `${+(num / 1_000).toFixed(0)} tys`;
-    return String(num);
-  };
-  const formatMassTooltip = (value: number | string) =>
-    `${formatNumber(Number(value || 0))} t`;
+  const {
+    chartData,
+    commodityKeys,
+    barByCommodityData,
+    pieData,
+    timeSeriesData,
+    trendResult,
+    timeSeriesChartData,
+    mathTableRows,
+    mathSummary,
+    formatCompactTick,
+    formatMassTooltip,
+  } = useReportCharts(data);
 
   if (!isReportGenerated || !data || data.length === 0) {
     return (
@@ -285,8 +172,8 @@ export default function ReportResults({ data }: ReportResultsProps) {
                           {formatNumber(
                             chartData.reduce(
                               (sum, port) => sum + Number(port[key] || 0),
-                              0,
-                            ),
+                              0
+                            )
                           )}
                         </TableCell>
                       ))}
@@ -521,7 +408,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                                   if (name === "trendValue")
                                     return [
                                       formatMassTooltip(
-                                        Math.round((value as number) * 100) / 100,
+                                        Math.round((value as number) * 100) / 100
                                       ),
                                       "Linia trendu",
                                     ];
@@ -611,10 +498,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                                   >
                                     <div className="px-6 py-4 bg-white border-b border-black/10 space-y-4 text-xs font-mono">
                                       <p className="font-sans font-semibold text-[#1a0069] text-xs">
-                                        {
-                                          trendResult.mathDetails
-                                            .methodDescription
-                                        }
+                                        {trendResult.mathDetails.methodDescription}
                                       </p>
                                       <ol className="list-decimal list-inside space-y-1 text-gray-700">
                                         {trendResult.mathDetails.steps.map(
@@ -622,7 +506,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                                             <li key={i} className="leading-relaxed">
                                               {step}
                                             </li>
-                                          ),
+                                          )
                                         )}
                                       </ol>
 
@@ -630,27 +514,13 @@ export default function ReportResults({ data }: ReportResultsProps) {
                                         <table className="w-full border-collapse text-right text-[11px]">
                                           <thead>
                                             <tr className="bg-[#f0eeff] text-[#1a0069]">
-                                              <th className="border border-black/10 px-2 py-1 text-left">
-                                                Nr
-                                              </th>
-                                              <th className="border border-black/10 px-2 py-1 text-left">
-                                                Miesiąc
-                                              </th>
-                                              <th className="border border-black/10 px-2 py-1">
-                                                y (dane)
-                                              </th>
-                                              <th className="border border-black/10 px-2 py-1">
-                                                ŷ (trend)
-                                              </th>
-                                              <th className="border border-black/10 px-2 py-1">
-                                                y − ŷ
-                                              </th>
-                                              <th className="border border-black/10 px-2 py-1">
-                                                (y − ŷ)²
-                                              </th>
-                                              <th className="border border-black/10 px-2 py-1">
-                                                (y − ȳ)²
-                                              </th>
+                                              <th className="border border-black/10 px-2 py-1 text-left">Nr</th>
+                                              <th className="border border-black/10 px-2 py-1 text-left">Miesiąc</th>
+                                              <th className="border border-black/10 px-2 py-1">y (dane)</th>
+                                              <th className="border border-black/10 px-2 py-1">ŷ (trend)</th>
+                                              <th className="border border-black/10 px-2 py-1">y − ŷ</th>
+                                              <th className="border border-black/10 px-2 py-1">(y − ŷ)²</th>
+                                              <th className="border border-black/10 px-2 py-1">(y − ȳ)²</th>
                                             </tr>
                                           </thead>
                                           <tbody>
@@ -659,74 +529,31 @@ export default function ReportResults({ data }: ReportResultsProps) {
                                                 key={row.period}
                                                 className="even:bg-gray-50"
                                               >
-                                                <td className="border border-black/10 px-2 py-0.5 text-left tabular-nums">
-                                                  {row.period}
-                                                </td>
-                                                <td className="border border-black/10 px-2 py-0.5 text-left">
-                                                  {row.month}
-                                                </td>
-                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">
-                                                  {row.y.toFixed(2)}
-                                                </td>
-                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">
-                                                  {row.yHat.toFixed(2)}
-                                                </td>
-                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">
-                                                  {row.residual.toFixed(2)}
-                                                </td>
-                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">
-                                                  {row.residual2.toFixed(2)}
-                                                </td>
-                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">
-                                                  {row.devFromMean2.toFixed(2)}
-                                                </td>
+                                                <td className="border border-black/10 px-2 py-0.5 text-left tabular-nums">{row.period}</td>
+                                                <td className="border border-black/10 px-2 py-0.5 text-left">{row.month}</td>
+                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">{row.y.toFixed(2)}</td>
+                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">{row.yHat.toFixed(2)}</td>
+                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">{row.residual.toFixed(2)}</td>
+                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">{row.residual2.toFixed(2)}</td>
+                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">{row.devFromMean2.toFixed(2)}</td>
                                               </tr>
                                             ))}
                                           </tbody>
                                           {mathSummary && (
                                             <tfoot>
                                               <tr className="bg-[#f5f3ff] font-semibold">
-                                                <td
-                                                  colSpan={2}
-                                                  className="border border-black/10 px-2 py-1 text-left"
-                                                >
-                                                  Σ / podsumowanie
-                                                </td>
-                                                <td className="border border-black/10 px-2 py-1 tabular-nums">
-                                                  ȳ ={" "}
-                                                  {mathSummary.yMean.toFixed(2)}
-                                                </td>
+                                                <td colSpan={2} className="border border-black/10 px-2 py-1 text-left">Σ / podsumowanie</td>
+                                                <td className="border border-black/10 px-2 py-1 tabular-nums">ȳ = {mathSummary.yMean.toFixed(2)}</td>
                                                 <td className="border border-black/10 px-2 py-1" />
                                                 <td className="border border-black/10 px-2 py-1" />
-                                                <td className="border border-black/10 px-2 py-1 tabular-nums">
-                                                  SSE ={" "}
-                                                  {mathSummary.sse.toFixed(2)}
-                                                </td>
-                                                <td className="border border-black/10 px-2 py-1 tabular-nums">
-                                                  SST ={" "}
-                                                  {mathSummary.sst.toFixed(2)}
-                                                </td>
+                                                <td className="border border-black/10 px-2 py-1 tabular-nums">SSE = {mathSummary.sse.toFixed(2)}</td>
+                                                <td className="border border-black/10 px-2 py-1 tabular-nums">SST = {mathSummary.sst.toFixed(2)}</td>
                                               </tr>
                                               {mathSummary.r2 !== null && (
                                                 <tr className="bg-[#f5f3ff]">
-                                                  <td
-                                                    colSpan={7}
-                                                    className="border border-black/10 px-2 py-1 text-left"
-                                                  >
-                                                    R² = 1 − SSE/SST = 1 −{" "}
-                                                    {mathSummary.sse.toFixed(
-                                                      2,
-                                                    )}{" "}
-                                                    /{" "}
-                                                    {mathSummary.sst.toFixed(
-                                                      2,
-                                                    )}{" "}
-                                                    ={" "}
-                                                    <span className="font-semibold text-[#1a0069]">
-                                                      {mathSummary.r2.toFixed(
-                                                        4,
-                                                      )}
-                                                    </span>
+                                                  <td colSpan={7} className="border border-black/10 px-2 py-1 text-left">
+                                                    R² = 1 − SSE/SST = 1 − {mathSummary.sse.toFixed(2)} / {mathSummary.sst.toFixed(2)} ={" "}
+                                                    <span className="font-semibold text-[#1a0069]">{mathSummary.r2.toFixed(4)}</span>
                                                   </td>
                                                 </tr>
                                               )}

@@ -6,7 +6,7 @@ import {
   getProductGroups,
   ReportRequestData,
 } from '@/lib/api/reportApiService';
-import { AppClientsTypes } from '@/lib/types';
+import type { AppClientsTypes } from '@/types';
 
 export interface ReportRow {
   port: string;

@@ -2,7 +2,7 @@ import useRaportContext from '@/contexts/RaportContext';
 import { exportCsv } from '@/lib/helpers/report-download/csvExporter';
 import { exportDocx } from '@/lib/helpers/report-download/docxExporter';
 import { exportPdf } from '@/lib/helpers/report-download/pdfExporter';
-import {
+import type {
   FileFormat,
   ProcessedData,
   RawReportRow,
@@ -11,7 +11,7 @@ import {
 } from '@/lib/helpers/report-download/types';
 import { exportXlsx } from '@/lib/helpers/report-download/xlsxExporter';
 import { toast } from '@/components/ui/use-toast';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 export type { FileFormat, ReportDataItem, UseReportDownloadReturn };
 
@@ -26,12 +26,11 @@ export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow
     trendType,
   } = useRaportContext();
 
-  const [isDownloadEnabled, setIsDownloadEnabled] = useState<boolean>(false);
+  const isDownloadEnabled = useMemo(
+    () => Boolean(isReportGenerated && data && data.length > 0),
+    [isReportGenerated, data]
+  );
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
-
-  useEffect(() => {
-    setIsDownloadEnabled(Boolean(isReportGenerated && data && data.length > 0));
-  }, [isReportGenerated, data]);
 
   const processData = useCallback((): ProcessedData => {
     const portData: Record<string, Record<string, number>> = {};

@@ -2,7 +2,8 @@
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import useRaportContext, { ChartType } from '@/contexts/RaportContext';
+import useRaportContext from '@/contexts/RaportContext';
+import { CHART_OPTIONS } from '@/constants';
 import { AnimatePresence, motion } from 'framer-motion';
 import PeriodDates from '../../selectors/PeriodDates';
 import Title from '../../Title';
@@ -12,13 +13,6 @@ interface PeriodSelectsProps {
   isLoading: boolean;
   onReset: () => void;
 }
-
-const CHART_OPTIONS: { type: ChartType; label: string }[] = [
-  { type: 'bar_port', label: 'Słupkowy – struktura wg portu' },
-  { type: 'bar_commodity', label: 'Słupkowy – wolumen wg grupy towarowej' },
-  { type: 'pie', label: 'Kołowy – udział grup towarowych' },
-  { type: 'bar_timeseries', label: 'Kolumnowy – obroty wg miesiąca (linia trendu)' },
-];
 
 const PeriodSelects = ({ isLoading, onReset }: PeriodSelectsProps) => {
   const { includeCharts, setIncludeCharts, selectedChartTypes, toggleChartType } =

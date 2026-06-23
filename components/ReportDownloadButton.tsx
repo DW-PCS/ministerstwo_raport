@@ -8,14 +8,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import useReportDownload, { ReportDataItem } from '@/hooks/useReportDownload';
-import { RawReportRow } from '@/lib/helpers/report-download/types';
+import type { RawReportRow } from '@/lib/helpers/report-download/types';
 
 import { Download, Loader2 } from 'lucide-react';
 
 interface ReportDownloadButtonProps {
   data: ReportDataItem[];
   rawData?: RawReportRow[];
-  variant?: 'simple' | 'dropdown';
   className?: string;
   startDate?: Date;
   endDate?: Date;

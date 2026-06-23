@@ -2,7 +2,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import useRaportContext from "@/contexts/RaportContext";
 import { buildPortOptions } from "@/lib/helpers/port-filters";
-import { AppClientsTypes } from "@/lib/types";
+import type { AppClientsTypes } from "@/types";
 import Title from "../../Title";
 
 interface PortSelectsProps {

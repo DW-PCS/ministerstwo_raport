@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { AppClientsTypes } from '@/lib/types';
+import type { AppClientsTypes } from '@/types';
 import CommodityGroupSelects from './CommodityGroupSelects';
 import PeriodSelects from './PeriodSelects';
 import PortSelects from './PortSelects';

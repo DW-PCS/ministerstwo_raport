@@ -1,4 +1,5 @@
-import { ChartType, TrendType } from '@/contexts/RaportContext';
+import type { ChartType } from '@/types';
+import type { TrendType } from '@/lib/helpers/trend-helpers';
 
 export interface ReportDataItem {
   [key: string]: unknown;
