@@ -27,7 +27,7 @@ import { MONTH_NAMES } from "@/lib/helpers/report-download/constants";
 import { calculateTrend, TrendType } from "@/lib/helpers/trend-helpers";
 import { Tooltip as AntdTooltip } from "antd";
 import { AnimatePresence, motion } from "framer-motion";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -86,6 +86,8 @@ export default function ReportResults({ data }: ReportResultsProps) {
     setShowTrendLine,
     setTrendType,
   } = useRaportContext();
+
+  const [showMathDetails, setShowMathDetails] = useState(false);
 
   const chartData = generateChartData({
     ports: submittedPorts,
@@ -151,6 +153,34 @@ export default function ReportResults({ data }: ReportResultsProps) {
       })),
     [timeSeriesData, trendResult],
   );
+
+  const mathTableRows = useMemo(() => {
+    if (!trendResult) return [];
+    const yMean =
+      timeSeriesData.reduce((s, d) => s + d.total, 0) / timeSeriesData.length;
+    return timeSeriesData.map((d, i) => {
+      const yHat = trendResult.trendPoints[i] ?? 0;
+      const residual = d.total - yHat;
+      return {
+        period: i + 1,
+        month: d.month,
+        y: d.total,
+        yHat,
+        residual,
+        residual2: residual ** 2,
+        devFromMean2: (d.total - yMean) ** 2,
+      };
+    });
+  }, [trendResult, timeSeriesData]);
+
+  const mathSummary = useMemo(() => {
+    if (!mathTableRows.length) return null;
+    const sse = mathTableRows.reduce((s, r) => s + r.residual2, 0);
+    const sst = mathTableRows.reduce((s, r) => s + r.devFromMean2, 0);
+    const yMean =
+      timeSeriesData.reduce((s, d) => s + d.total, 0) / timeSeriesData.length;
+    return { sse, sst, r2: sst > 0 ? 1 - sse / sst : null, yMean };
+  }, [mathTableRows, timeSeriesData]);
 
   const formatCompactTick = (value: number | string) => {
     const num = Number(value || 0);
@@ -536,25 +566,177 @@ export default function ReportResults({ data }: ReportResultsProps) {
                               transition={{ duration: 0.2 }}
                               className="overflow-hidden"
                             >
-                              <div className="px-6 py-3 bg-[#f5f3ff] border-b border-black/10 flex flex-wrap gap-x-6 gap-y-1 text-xs">
-                                {trendResult.r2 !== null && (
+                              <div className="px-6 py-3 bg-[#f5f3ff] border-b border-black/10 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 text-xs">
+                                <div className="flex flex-wrap gap-x-6 gap-y-1">
+                                  {trendResult.r2 !== null && (
+                                    <span>
+                                      <span className="font-semibold text-[#1a0069]">
+                                        R²
+                                      </span>{" "}
+                                      ={" "}
+                                      <span className="tabular-nums">
+                                        {trendResult.r2.toFixed(4)}
+                                      </span>
+                                    </span>
+                                  )}
                                   <span>
                                     <span className="font-semibold text-[#1a0069]">
-                                      R²
+                                      Równanie:
                                     </span>{" "}
-                                    ={" "}
-                                    <span className="tabular-nums">
-                                      {trendResult.r2.toFixed(4)}
-                                    </span>
+                                    {trendResult.equation}
                                   </span>
-                                )}
-                                <span>
-                                  <span className="font-semibold text-[#1a0069]">
-                                    Równanie:
-                                  </span>{" "}
-                                  {trendResult.equation}
-                                </span>
+                                </div>
+                                <button
+                                  onClick={() =>
+                                    setShowMathDetails((v) => !v)
+                                  }
+                                  className="text-[#1a0069]/60 hover:text-[#1a0069] underline underline-offset-2 cursor-pointer transition-colors shrink-0"
+                                >
+                                  {showMathDetails
+                                    ? "Ukryj obliczenia"
+                                    : "Szczegóły obliczeń"}
+                                </button>
                               </div>
+
+                              <AnimatePresence initial={false}>
+                                {showMathDetails && (
+                                  <motion.div
+                                    key="math-details"
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="px-6 py-4 bg-white border-b border-black/10 space-y-4 text-xs font-mono">
+                                      <p className="font-sans font-semibold text-[#1a0069] text-xs">
+                                        {
+                                          trendResult.mathDetails
+                                            .methodDescription
+                                        }
+                                      </p>
+                                      <ol className="list-decimal list-inside space-y-1 text-gray-700">
+                                        {trendResult.mathDetails.steps.map(
+                                          (step, i) => (
+                                            <li key={i} className="leading-relaxed">
+                                              {step}
+                                            </li>
+                                          ),
+                                        )}
+                                      </ol>
+
+                                      <div className="overflow-x-auto">
+                                        <table className="w-full border-collapse text-right text-[11px]">
+                                          <thead>
+                                            <tr className="bg-[#f0eeff] text-[#1a0069]">
+                                              <th className="border border-black/10 px-2 py-1 text-left">
+                                                Nr
+                                              </th>
+                                              <th className="border border-black/10 px-2 py-1 text-left">
+                                                Miesiąc
+                                              </th>
+                                              <th className="border border-black/10 px-2 py-1">
+                                                y (dane)
+                                              </th>
+                                              <th className="border border-black/10 px-2 py-1">
+                                                ŷ (trend)
+                                              </th>
+                                              <th className="border border-black/10 px-2 py-1">
+                                                y − ŷ
+                                              </th>
+                                              <th className="border border-black/10 px-2 py-1">
+                                                (y − ŷ)²
+                                              </th>
+                                              <th className="border border-black/10 px-2 py-1">
+                                                (y − ȳ)²
+                                              </th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {mathTableRows.map((row) => (
+                                              <tr
+                                                key={row.period}
+                                                className="even:bg-gray-50"
+                                              >
+                                                <td className="border border-black/10 px-2 py-0.5 text-left tabular-nums">
+                                                  {row.period}
+                                                </td>
+                                                <td className="border border-black/10 px-2 py-0.5 text-left">
+                                                  {row.month}
+                                                </td>
+                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">
+                                                  {row.y.toFixed(2)}
+                                                </td>
+                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">
+                                                  {row.yHat.toFixed(2)}
+                                                </td>
+                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">
+                                                  {row.residual.toFixed(2)}
+                                                </td>
+                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">
+                                                  {row.residual2.toFixed(2)}
+                                                </td>
+                                                <td className="border border-black/10 px-2 py-0.5 tabular-nums">
+                                                  {row.devFromMean2.toFixed(2)}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                          {mathSummary && (
+                                            <tfoot>
+                                              <tr className="bg-[#f5f3ff] font-semibold">
+                                                <td
+                                                  colSpan={2}
+                                                  className="border border-black/10 px-2 py-1 text-left"
+                                                >
+                                                  Σ / podsumowanie
+                                                </td>
+                                                <td className="border border-black/10 px-2 py-1 tabular-nums">
+                                                  ȳ ={" "}
+                                                  {mathSummary.yMean.toFixed(2)}
+                                                </td>
+                                                <td className="border border-black/10 px-2 py-1" />
+                                                <td className="border border-black/10 px-2 py-1" />
+                                                <td className="border border-black/10 px-2 py-1 tabular-nums">
+                                                  SSE ={" "}
+                                                  {mathSummary.sse.toFixed(2)}
+                                                </td>
+                                                <td className="border border-black/10 px-2 py-1 tabular-nums">
+                                                  SST ={" "}
+                                                  {mathSummary.sst.toFixed(2)}
+                                                </td>
+                                              </tr>
+                                              {mathSummary.r2 !== null && (
+                                                <tr className="bg-[#f5f3ff]">
+                                                  <td
+                                                    colSpan={7}
+                                                    className="border border-black/10 px-2 py-1 text-left"
+                                                  >
+                                                    R² = 1 − SSE/SST = 1 −{" "}
+                                                    {mathSummary.sse.toFixed(
+                                                      2,
+                                                    )}{" "}
+                                                    /{" "}
+                                                    {mathSummary.sst.toFixed(
+                                                      2,
+                                                    )}{" "}
+                                                    ={" "}
+                                                    <span className="font-semibold text-[#1a0069]">
+                                                      {mathSummary.r2.toFixed(
+                                                        4,
+                                                      )}
+                                                    </span>
+                                                  </td>
+                                                </tr>
+                                              )}
+                                            </tfoot>
+                                          )}
+                                        </table>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </motion.div>
                           )}
                         </AnimatePresence>
