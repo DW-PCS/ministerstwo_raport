@@ -104,6 +104,7 @@ export async function buildChartImages(
         data: totals,
         backgroundColor: palette[0],
         borderRadius: 4,
+        order: 1,
       },
     ];
 
@@ -119,6 +120,7 @@ export async function buildChartImages(
         pointRadius: 0,
         fill: false,
         tension: 0.1,
+        order: 0,
       });
     }
 
