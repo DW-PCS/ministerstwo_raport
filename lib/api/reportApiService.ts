@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 const BASE_URL = 'http://74.248.33.80:8080';
 
@@ -35,9 +36,7 @@ async function fetchApi(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const url = `${BASE_URL}/${endpoint}`;
-
-  const response = await fetch(url, {
+  const response = await fetch(`${BASE_URL}/${endpoint}`, {
     method: options.method || 'GET',
     headers,
     body: options.body ? JSON.stringify(options.body) : undefined,
@@ -45,11 +44,14 @@ async function fetchApi(
   });
 
   if (response.status === 401) {
-    return { status: 401, message: 'Unauthorized access. Please log in again.' };
+    cookieStore.delete('access_token');
+    redirect('/?auth=required');
   }
+
   if (response.status === 403) {
-    return { status: 403, message: 'Forbidden access.' };
+    throw new Error('Brak dostępu do zasobu.');
   }
+
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`API request failed: ${response.status} - ${errorText}`);
@@ -59,8 +61,7 @@ async function fetchApi(
 }
 
 export async function loginUser(username: string, password: string): Promise<LoginResponse> {
-  const url = `${BASE_URL}/users/login`;
-  const response = await fetch(url, {
+  const response = await fetch(`${BASE_URL}/users/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
@@ -72,22 +73,17 @@ export async function loginUser(username: string, password: string): Promise<Log
 }
 
 export async function getApplicationClients() {
-  const data = await fetchApi('ReportMI/GetApplicationClients');
-  return data;
+  return fetchApi('ReportMI/GetApplicationClients');
 }
 
 export async function getProductGroups(data: ReportRequestData) {
-
-
-  const res = await fetchApi('ReportMI/VproductGroup', {
+  return fetchApi('ReportMI/VproductGroup', {
     method: 'POST',
     body: data,
     cache: 'no-store',
   });
-  return res;
 }
 
 export async function getDspCargoType() {
-  const data = await fetchApi('ReportMI/GetDspCargoType');
-  return data;
+  return fetchApi('ReportMI/GetDspCargoType');
 }
