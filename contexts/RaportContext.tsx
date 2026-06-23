@@ -81,9 +81,14 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const toggleChartType = (type: ChartType) => {
-    setSelectedChartTypes(prev =>
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    );
+    setSelectedChartTypes(prev => {
+      const isAdding = !prev.includes(type);
+      if (type === 'bar_timeseries' && isAdding) {
+        setShowTrendLine(true);
+        setTrendType('linear');
+      }
+      return isAdding ? [...prev, type] : prev.filter(t => t !== type);
+    });
   };
 
   const resetFilters = () => {
