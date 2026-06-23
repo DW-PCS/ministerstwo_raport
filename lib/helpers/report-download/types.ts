@@ -1,8 +1,13 @@
-import { ChartType } from '@/contexts/RaportContext';
+import { ChartType, TrendType } from '@/contexts/RaportContext';
 
 export interface ReportDataItem {
   [key: string]: unknown;
   name: string;
+}
+
+export interface RawReportRow {
+  reportDate?: string;
+  ilosc: number;
 }
 
 export interface ProcessedData {
@@ -35,4 +40,7 @@ export interface PdfDocxBaseOptions extends ExportBaseOptions {
   formatPeriodText: (startDate?: Date, endDate?: Date) => string;
   submittedPorts: string[];
   submittedCommodities: string[];
+  rawData?: RawReportRow[];
+  showTrendLine?: boolean;
+  trendType?: TrendType;
 }

@@ -1,7 +1,15 @@
-import { ChartType } from '@/contexts/RaportContext';
+import { ChartType, TrendType } from '@/contexts/RaportContext';
 import { COLORS } from '@/lib/constants';
+import { MONTH_NAMES } from '@/lib/helpers/report-download/constants';
 import { ProcessedData } from '@/lib/helpers/report-download/types';
+import { calculateTrend } from '@/lib/helpers/trend-helpers';
 import Chart from 'chart.js/auto';
+
+export interface ChartBuildOptions {
+  rawData?: { reportDate?: string; ilosc: number }[];
+  showTrendLine?: boolean;
+  trendType?: TrendType;
+}
 
 export async function fetchImageAsDataUrl(path: string): Promise<string> {
   const response = await fetch(path);
@@ -61,7 +69,8 @@ async function renderChartAsImage(
 
 export async function buildChartImages(
   processedData: ProcessedData,
-  chartTypes: ChartType[]
+  chartTypes: ChartType[],
+  options: ChartBuildOptions = {}
 ): Promise<Array<{ title: string; image: string }>> {
   const ports = Object.keys(processedData.portData);
   const commodityTotals = processedData.commodityNames.map(commodity =>
@@ -71,6 +80,66 @@ export async function buildChartImages(
   const palette = COLORS;
   const chartFontSize = 14;
   const chartLegendFontSize = 18;
+
+  const timeSeriesChartEntry: { type: ChartType; title: string; config: Record<string, unknown> } | null = (() => {
+    if (!chartTypes.includes('bar_timeseries') || !options.rawData?.length) return null;
+
+    const monthly: Record<string, number> = {};
+    options.rawData.forEach(row => {
+      if (!row.reportDate) return;
+      const ym = row.reportDate.slice(0, 7);
+      monthly[ym] = (monthly[ym] || 0) + row.ilosc;
+    });
+    const sorted = Object.entries(monthly).sort(([a], [b]) => a.localeCompare(b));
+    const labels = sorted.map(([date]) => {
+      const parts = date.split('-');
+      return `${MONTH_NAMES[parseInt(parts[1] ?? '1', 10) - 1] ?? parts[1]} ${parts[0]}`;
+    });
+    const totals = sorted.map(([, v]) => v);
+
+    const datasets: Record<string, unknown>[] = [
+      {
+        type: 'bar',
+        label: 'Obroty [t]',
+        data: totals,
+        backgroundColor: palette[0],
+        borderRadius: 4,
+      },
+    ];
+
+    if (options.showTrendLine && totals.length >= 2) {
+      const trendResult = calculateTrend(totals, options.trendType ?? 'linear');
+      datasets.push({
+        type: 'line',
+        label: 'Linia trendu',
+        data: trendResult.trendPoints,
+        borderColor: '#e63946',
+        borderWidth: 2,
+        borderDash: [6, 3],
+        pointRadius: 0,
+        fill: false,
+        tension: 0.1,
+      });
+    }
+
+    return {
+      type: 'bar_timeseries' as ChartType,
+      title: `Wykres ${chartTypes.indexOf('bar_timeseries') + 1}: Obroty łącznie wg miesiąca [t]`,
+      config: {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: chartLegendFontSize } } },
+          },
+          scales: {
+            x: { ticks: { font: { size: chartFontSize } } },
+            y: { beginAtZero: true, ticks: { font: { size: chartFontSize } } },
+          },
+        },
+      },
+    };
+  })();
 
   const allCharts: { type: ChartType; title: string; config: Record<string, unknown> }[] = [
     {
@@ -152,7 +221,13 @@ export async function buildChartImages(
     },
   ];
 
-  const filtered = allCharts.filter(c => chartTypes.includes(c.type));
+  const allChartsWithTimeSeries = [
+    ...allCharts,
+    ...(timeSeriesChartEntry ? [timeSeriesChartEntry] : []),
+  ];
+  const filtered = chartTypes
+    .map(type => allChartsWithTimeSeries.find(c => c.type === type))
+    .filter((c): c is NonNullable<typeof c> => !!c);
 
   return Promise.all(
     filtered.map(async chartDef => ({

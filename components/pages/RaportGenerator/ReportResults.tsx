@@ -226,6 +226,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
         </div>
         <ReportDownloadButton
           data={chartData}
+          rawData={data}
           startDate={startDate}
           endDate={endDate}
         />

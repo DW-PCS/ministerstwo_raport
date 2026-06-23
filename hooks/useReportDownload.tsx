@@ -5,21 +5,25 @@ import { exportPdf } from '@/lib/helpers/report-download/pdfExporter';
 import {
   FileFormat,
   ProcessedData,
+  RawReportRow,
   ReportDataItem,
   UseReportDownloadReturn,
 } from '@/lib/helpers/report-download/types';
 import { exportXlsx } from '@/lib/helpers/report-download/xlsxExporter';
+import { toast } from '@/components/ui/use-toast';
 import { useCallback, useEffect, useState } from 'react';
 
 export type { FileFormat, ReportDataItem, UseReportDownloadReturn };
 
-export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadReturn => {
+export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow[]): UseReportDownloadReturn => {
   const {
     isReportGenerated,
     includeCharts,
     selectedChartTypes,
     submittedCommodities,
     submittedPorts,
+    showTrendLine,
+    trendType,
   } = useRaportContext();
 
   const [isDownloadEnabled, setIsDownloadEnabled] = useState<boolean>(false);
@@ -81,6 +85,15 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
     async (format: FileFormat, startDate?: Date, endDate?: Date) => {
       if (!isDownloadEnabled) return;
 
+      if (includeCharts && selectedChartTypes.length === 0 && (format === 'pdf' || format === 'docx')) {
+        toast({
+          title: 'Brak wybranego typu wykresu',
+          description: 'Zaznacz co najmniej jeden typ wykresu lub odznacz opcję "Dodaj wykresy do dokumentu".',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       setIsDownloading(true);
       try {
         if (format === 'csv') {
@@ -101,6 +114,9 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
             selectedChartTypes,
             submittedPorts,
             submittedCommodities,
+            rawData,
+            showTrendLine,
+            trendType,
             startDate,
             endDate,
           });
@@ -114,6 +130,9 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
             selectedChartTypes,
             submittedPorts,
             submittedCommodities,
+            rawData,
+            showTrendLine,
+            trendType,
             startDate,
             endDate,
           });
@@ -136,9 +155,12 @@ export const useReportDownload = (data: ReportDataItem[]): UseReportDownloadRetu
       includeCharts,
       isDownloadEnabled,
       processData,
+      rawData,
       selectedChartTypes,
+      showTrendLine,
       submittedCommodities,
       submittedPorts,
+      trendType,
     ]
   );
 

@@ -24,6 +24,9 @@ export async function exportPdf({
   selectedChartTypes,
   submittedPorts,
   submittedCommodities,
+  rawData,
+  showTrendLine,
+  trendType,
   startDate,
   endDate,
 }: PdfDocxBaseOptions): Promise<void> {
@@ -34,7 +37,7 @@ export async function exportPdf({
     const periodText = formatPeriodText(startDate, endDate);
     const chartImages =
       includeCharts && selectedChartTypes.length > 0
-        ? await buildChartImages(processedData, selectedChartTypes)
+        ? await buildChartImages(processedData, selectedChartTypes, { rawData, showTrendLine, trendType })
         : [];
     const monthlySections = ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX
       ? await buildMonthlyTableSections(
