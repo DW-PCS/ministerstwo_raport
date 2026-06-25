@@ -231,7 +231,7 @@ export function buildDocxDocument({
         new Paragraph({
           alignment: AlignmentType.CENTER,
           spacing: { after: 240 },
-          children: [new TextRun({ text: COVER_DEPT, bold: true, color: '6B7280', size: 11 })],
+          children: [new TextRun({ text: COVER_DEPT, bold: true, color: '6B7280', size: 22 })],
         }),
         new Paragraph({
           alignment: AlignmentType.CENTER,
