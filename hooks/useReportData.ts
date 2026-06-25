@@ -22,9 +22,8 @@ function generateMonthPeriods(start: Date, end: Date): PeriodRequest[] {
     const id = `${year}-${String(month + 1).padStart(2, '0')}`;
 
     const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-    const nextMonth = month === 11 ? 1 : month + 2;
-    const nextYear = month === 11 ? year + 1 : year;
-    const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
     periods.push({
       Id: id,
@@ -50,8 +49,8 @@ const useReportData = (allPorts: AppClientsTypes[], allCargoTypes: CargoTypeItem
   const [data, setData] = useState<ReportRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  async function fetchProductGroupData(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function triggerFetch() {
+    if (!startDate || !endDate) return;
     setIsLoading(true);
 
     try {
@@ -61,11 +60,10 @@ const useReportData = (allPorts: AppClientsTypes[], allCargoTypes: CargoTypeItem
         selectedCommodities.includes(ct.cargoGroupCode)
       );
 
-      if (breakdownByPeriod && startDate && endDate) {
+      if (breakdownByPeriod) {
         const periods = generateMonthPeriods(startDate, endDate);
         const results = await fetchMultiplePeriodsAction(appClients, selectedCargoTypes, periods);
 
-   
         const allRows: ReportRow[] = results.flatMap(({ periodId, rows }) =>
           rows.map(row => ({ ...row, reportDate: `${periodId}-01` }))
         );
@@ -75,6 +73,9 @@ const useReportData = (allPorts: AppClientsTypes[], allCargoTypes: CargoTypeItem
         return aggregatedResult;
       }
 
+      const normalizedStart = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      const normalizedEnd = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
+
       const period: PeriodRequest = {
         Id: Date.now().toString(),
         PeriodType: 'PERIOD',
@@ -82,8 +83,8 @@ const useReportData = (allPorts: AppClientsTypes[], allCargoTypes: CargoTypeItem
         HalfYear: null,
         Quarter: null,
         Month: null,
-        StartDate: format(startDate!, 'yyyy-MM-dd'),
-        EndDate: format(endDate!, 'yyyy-MM-dd'),
+        StartDate: format(normalizedStart, 'yyyy-MM-dd'),
+        EndDate: format(normalizedEnd, 'yyyy-MM-dd'),
       };
 
       const result = await fetchReportDataAction(appClients, selectedCargoTypes, period);
@@ -95,6 +96,11 @@ const useReportData = (allPorts: AppClientsTypes[], allCargoTypes: CargoTypeItem
     }
   }
 
+  async function fetchProductGroupData(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    return triggerFetch();
+  }
+
   function resetData() {
     setData([]);
   }
@@ -103,6 +109,7 @@ const useReportData = (allPorts: AppClientsTypes[], allCargoTypes: CargoTypeItem
     data,
     isLoading,
     fetchProductGroupData,
+    triggerFetch,
     resetData,
   };
 };

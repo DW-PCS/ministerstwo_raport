@@ -4,6 +4,7 @@ import useRaportContext from "@/contexts/RaportContext";
 import useComparisonData from "@/hooks/useComparisonData";
 import useReportData from "@/hooks/useReportData";
 import type { AppClientsTypes, CargoTypeItem } from "@/types";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 interface MainPageProps {
@@ -20,10 +21,27 @@ const MainPage = ({ ports, cargoTypes }: MainPageProps) => {
     selectedCommodities,
     startDate,
     endDate,
+    breakdownByPeriod,
+    isReportGenerated,
   } = useRaportContext();
 
-  const { fetchProductGroupData, data, isLoading, resetData } = useReportData(ports, cargoTypes);
+  const { fetchProductGroupData, triggerFetch, data, isLoading, resetData } = useReportData(ports, cargoTypes);
   const comparisonHook = useComparisonData(ports, cargoTypes);
+
+  const triggerFetchRef = useRef(triggerFetch);
+  useEffect(() => { triggerFetchRef.current = triggerFetch; });
+
+  const prevBreakdownRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (prevBreakdownRef.current === null) {
+      prevBreakdownRef.current = breakdownByPeriod;
+      return;
+    }
+    if (prevBreakdownRef.current === breakdownByPeriod) return;
+    prevBreakdownRef.current = breakdownByPeriod;
+    if (!isReportGenerated) return;
+    triggerFetchRef.current();
+  }, [breakdownByPeriod, isReportGenerated]);
 
   const groups = [...new Set(cargoTypes.map(c => c.cargoGroupCode))];
 
