@@ -10,7 +10,7 @@ import {
 import { fetchCargoTypesAction, fetchPortsAction } from '@/actions/report';
 
 export default async function CargoTurnoverReportPage() {
-  const [ports, groups] = await Promise.all([
+  const [ports, cargoTypes] = await Promise.all([
     fetchPortsAction(),
     fetchCargoTypesAction(),
   ]);
@@ -30,7 +30,7 @@ export default async function CargoTurnoverReportPage() {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      <MainPage ports={ports} groups={groups} />
+      <MainPage ports={ports} cargoTypes={cargoTypes} />
     </>
   );
 }

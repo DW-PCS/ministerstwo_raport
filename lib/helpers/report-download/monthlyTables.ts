@@ -1,4 +1,4 @@
-import { fetchPortsAction, fetchReportDataAction, ReportRow } from '@/actions/report';
+import { fetchCargoTypesAction, fetchPortsAction, fetchReportDataAction, ReportRow } from '@/actions/report';
 import { expandSelectedPortsToBackendNames } from '@/lib/helpers/port-filters';
 import { MONTH_NAMES } from '@/lib/helpers/report-download/constants';
 import {
@@ -7,7 +7,7 @@ import {
   normalizeLabel,
   percentValue,
 } from '@/lib/helpers/report-download/utils';
-import type { AppClientsTypes } from '@/types';
+import type { AppClientsTypes, PeriodRequest } from '@/types';
 
 interface PortGroup {
   clients: AppClientsTypes[];
@@ -278,10 +278,14 @@ export async function buildMonthlyTableSections(
   const previousYear = currentYear - 1;
   const lastMonthIndex = referenceDate.getMonth();
 
-  const allPorts = await fetchPortsAction();
+  const [allPorts, allCargoTypes] = await Promise.all([fetchPortsAction(), fetchCargoTypesAction()]);
   const backendPortNames = expandSelectedPortsToBackendNames(submittedPorts, allPorts);
   const selectedAppClients = allPorts.filter(port => backendPortNames.includes(port.name));
   if (selectedAppClients.length === 0) return [];
+
+  const selectedCargoTypes = allCargoTypes.filter(ct =>
+    submittedCommodities.includes(ct.cargoGroupCode)
+  );
 
   const portGroups = buildPortGroups(selectedAppClients);
   const monthIndices = Array.from({ length: lastMonthIndex + 1 }, (_, idx) => lastMonthIndex - idx);
@@ -294,19 +298,30 @@ export async function buildMonthlyTableSections(
     const currentRangeStart = new Date(currentYear, 0, 1);
     const currentRangeEnd = new Date(currentYear, lastMonthIndex + 1, 0);
 
+    const previousPeriod: PeriodRequest = {
+      Id: `prev-${previousYear}`,
+      PeriodType: 'PERIOD',
+      Year: null,
+      HalfYear: null,
+      Quarter: null,
+      Month: null,
+      StartDate: formatIsoDate(previousRangeStart),
+      EndDate: formatIsoDate(previousRangeEnd),
+    };
+    const currentPeriod: PeriodRequest = {
+      Id: `curr-${currentYear}`,
+      PeriodType: 'PERIOD',
+      Year: null,
+      HalfYear: null,
+      Quarter: null,
+      Month: null,
+      StartDate: formatIsoDate(currentRangeStart),
+      EndDate: formatIsoDate(currentRangeEnd),
+    };
+
     const [previousRows, currentRows] = await Promise.all([
-      fetchReportDataAction(
-        portGroup.clients,
-        submittedCommodities,
-        formatIsoDate(previousRangeStart),
-        formatIsoDate(previousRangeEnd)
-      ),
-      fetchReportDataAction(
-        portGroup.clients,
-        submittedCommodities,
-        formatIsoDate(currentRangeStart),
-        formatIsoDate(currentRangeEnd)
-      ),
+      fetchReportDataAction(portGroup.clients, selectedCargoTypes, previousPeriod),
+      fetchReportDataAction(portGroup.clients, selectedCargoTypes, currentPeriod),
     ]);
 
     const previousMonthlyTotals = buildMonthlyTotals(previousRows, previousYear);

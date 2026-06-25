@@ -8,12 +8,25 @@ export interface LoginResponse {
 }
 
 export interface ReportRequestData {
-  AppClients: { Id: number; Name: string }[];
-  CargoTypes: { CargoGroupCode: string }[];
-  Period: {
-    StartDate: string;
-    EndDate: string;
-  };
+  AppClients: { Id: number; Enabled: boolean; Name: string; City: string; OrgName: string }[];
+  CargoTypes: {
+    Id: number;
+    AppClientId: number;
+    CargoGroupCode: string;
+    CargoSubGroupCode: string | null;
+    Code: string;
+    Description: string | null;
+  }[];
+  Periods: {
+    Id: string;
+    PeriodType: string;
+    Year: number | null;
+    HalfYear: number | null;
+    Quarter: number | null;
+    Month: number | null;
+    StartDate: string | null;
+    EndDate: string | null;
+  }[];
 }
 
 async function fetchApi(
@@ -57,7 +70,9 @@ async function fetchApi(
     throw new Error(`API request failed: ${response.status} - ${errorText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  return data;
 }
 
 export async function loginUser(username: string, password: string): Promise<LoginResponse> {
@@ -69,7 +84,9 @@ export async function loginUser(username: string, password: string): Promise<Log
   if (!response.ok) {
     throw new Error('Nieprawidłowe dane logowania');
   }
-  return response.json();
+  const data = await response.json();
+
+  return data;
 }
 
 export async function getApplicationClients() {

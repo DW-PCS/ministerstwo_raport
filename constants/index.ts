@@ -1,5 +1,5 @@
-import type { ChartType } from '@/types';
 import type { TrendType } from '@/lib/helpers/trend-helpers';
+import type { ChartType, PeriodType } from '@/types';
 
 export const COLORS = [
   '#1a0069',
@@ -56,6 +56,15 @@ export const CHART_OPTIONS: { type: ChartType; label: string }[] = [
   { type: 'bar_commodity', label: 'Słupkowy – wolumen wg grupy towarowej' },
   { type: 'pie', label: 'Kołowy – udział grup towarowych' },
   { type: 'bar_timeseries', label: 'Kolumnowy – obroty wg miesiąca (linia trendu)' },
+];
+
+export const PERIOD_TYPE_OPTIONS: { value: PeriodType; label: string }[] = [
+  { value: 'PERIOD', label: 'Okres' },
+  { value: 'YEAR', label: 'Rok' },
+  { value: 'HALF_YEAR', label: 'Półrocze' },
+  { value: 'QUARTER', label: 'Kwartał' },
+  { value: 'MONTH', label: 'Miesiąc' },
+
 ];
 
 export const REPORT_TYPES = [

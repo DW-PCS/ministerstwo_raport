@@ -2,25 +2,40 @@
 import RaportGenerator from "@/components/pages/RaportGenerator";
 import useRaportContext from "@/contexts/RaportContext";
 import useReportData from "@/hooks/useReportData";
-import type { AppClientsTypes } from "@/types";
+import type { AppClientsTypes, CargoTypeItem } from "@/types";
 import { toast } from "sonner";
 
 interface MainPageProps {
   ports: AppClientsTypes[];
-  groups: string[];
+  cargoTypes: CargoTypeItem[];
 }
 
-const MainPage = ({ ports, groups }: MainPageProps) => {
+const MainPage = ({ ports, cargoTypes }: MainPageProps) => {
   const {
     generateReport,
     resetFilters,
     selectedPorts,
     selectedCommodities,
+    periodType,
+    periodYear,
+    periodHalfYear,
+    periodQuarter,
+    periodMonth,
     startDate,
     endDate,
   } = useRaportContext();
   const { fetchProductGroupData, data, isLoading, resetData } =
-    useReportData(ports);
+    useReportData(ports, cargoTypes);
+
+  const groups = [...new Set(cargoTypes.map(c => c.cargoGroupCode))];
+
+  const isPeriodValid = () => {
+    if (periodType === 'PERIOD') return !!startDate && !!endDate;
+    if (periodType === 'HALF_YEAR') return !!periodYear && periodHalfYear !== null;
+    if (periodType === 'QUARTER') return !!periodYear && periodQuarter !== null;
+    if (periodType === 'MONTH') return !!periodYear && periodMonth !== null;
+    return !!periodYear;
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,18 +47,25 @@ const MainPage = ({ ports, groups }: MainPageProps) => {
       toast.error("Wybierz co najmniej jedną grupę towarową");
       return;
     }
-    if (!startDate || !endDate) {
-      toast.error("Wybierz datę początkową i końcową");
+    if (!isPeriodValid()) {
+      toast.error("Uzupełnij wszystkie pola okresu");
       return;
     }
-    await fetchProductGroupData(e);
-    generateReport();
-    toast.success("Raport wygenerowany", {
-      description: "Dane zostały załadowane pomyślnie.",
-    });
-    setTimeout(() => {
-      document.getElementById("report-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
+    try {
+      await fetchProductGroupData(e);
+      generateReport();
+      toast.success("Raport wygenerowany", {
+        description: "Dane zostały załadowane pomyślnie.",
+      });
+      setTimeout(() => {
+        document.getElementById("report-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    } catch (error) {
+      console.error('[MainPage] fetchProductGroupData error:', error);
+      toast.error("Błąd podczas generowania raportu", {
+        description: error instanceof Error ? error.message : "Nieznany błąd",
+      });
+    }
   };
 
   const handleReset = () => {

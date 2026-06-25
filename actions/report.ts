@@ -6,7 +6,7 @@ import {
   getProductGroups,
   ReportRequestData,
 } from '@/lib/api/reportApiService';
-import type { AppClientsTypes } from '@/types';
+import type { AppClientsTypes, CargoTypeItem, PeriodRequest } from '@/types';
 
 export interface ReportRow {
   port: string;
@@ -29,43 +29,68 @@ export async function fetchPortsAction(): Promise<AppClientsTypes[]> {
   );
 }
 
-export async function fetchCargoTypesAction(): Promise<string[]> {
+export async function fetchCargoTypesAction(): Promise<CargoTypeItem[]> {
   const data = await getDspCargoType();
   if (!Array.isArray(data)) return [];
-  const unique = new Set<string>(
-    (data as { CargoGroupCode: string }[]).map(item => item.CargoGroupCode)
-  );
-  return Array.from(unique);
+  return (
+    data as {
+      Id: number;
+      AppClientId: number;
+      CargoGroupCode: string;
+      CargoSubGroupCode: string | null;
+      Code: string;
+      Description: string | null;
+    }[]
+  ).map(item => ({
+    id: item.Id,
+    appClientId: item.AppClientId,
+    cargoGroupCode: item.CargoGroupCode,
+    cargoSubGroupCode: item.CargoSubGroupCode,
+    code: item.Code,
+    description: item.Description,
+  }));
 }
 
 export async function fetchReportDataAction(
   appClients: AppClientsTypes[],
-  cargoTypes: string[],
-  startDate: string,
-  endDate: string
+  cargoTypes: CargoTypeItem[],
+  period: PeriodRequest
 ): Promise<ReportRow[]> {
   const requestData: ReportRequestData = {
-    AppClients: appClients.map(c => ({ Id: c.id, Name: c.name })),
-    CargoTypes: cargoTypes.map(code => ({ CargoGroupCode: code })),
-    Period: { StartDate: startDate, EndDate: endDate },
+    AppClients: appClients.map(c => ({
+      Id: c.id,
+      Enabled: c.enabled,
+      Name: c.name,
+      City: c.city,
+      OrgName: c.orgName,
+    })),
+    CargoTypes: cargoTypes.map(c => ({
+      Id: c.id,
+      AppClientId: c.appClientId,
+      CargoGroupCode: c.cargoGroupCode,
+      CargoSubGroupCode: c.cargoSubGroupCode,
+      Code: c.code,
+      Description: c.description,
+    })),
+    Periods: [period],
   };
 
   const data = await getProductGroups(requestData);
 
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data) || data.length === 0) return [];
 
-  return data.map(
-    (item: {
-      Port: string;
-      Kod?: string;
-      Grupa?: string;
-      Ilosc: number;
-      TransshipmentReportDate?: string;
-    }) => ({
-      port: item.Port,
-      kod: item.Kod ?? item.Grupa ?? '',
-      ilosc: Number(item.Ilosc),
-      reportDate: item.TransshipmentReportDate,
-    })
-  );
+  const rows: {
+    Port: string;
+    Kod?: string;
+    Grupa?: string;
+    Ilosc: number;
+    TransshipmentReportDate?: string;
+  }[] = data[0].productGroupReportRows ?? [];
+
+  return rows.map(item => ({
+    port: item.Port,
+    kod: item.Kod ?? item.Grupa ?? '',
+    ilosc: Number(item.Ilosc),
+    reportDate: item.TransshipmentReportDate,
+  }));
 }
