@@ -1,19 +1,16 @@
 'use client';
 
-import type { ChartType, PeriodType } from '@/types';
 import type { TrendType } from '@/lib/helpers/trend-helpers';
+import type { ChartType, ReportTab } from '@/types';
 import { createContext, ReactNode, useContext, useState } from 'react';
 
 export type { ChartType, TrendType };
 
 type RaportContextType = {
+  reportTab: ReportTab;
+  setReportTab: (tab: ReportTab) => void;
   selectedPorts: string[];
   selectedCommodities: string[];
-  periodType: PeriodType;
-  periodYear: number;
-  periodHalfYear: 1 | 2 | null;
-  periodQuarter: 1 | 2 | 3 | 4 | null;
-  periodMonth: number | null;
   startDate: Date | undefined;
   endDate: Date | undefined;
   isReportGenerated: boolean;
@@ -23,13 +20,10 @@ type RaportContextType = {
   selectedChartTypes: ChartType[];
   showTrendLine: boolean;
   trendType: TrendType;
+  breakdownByPeriod: boolean;
+  setBreakdownByPeriod: (value: boolean) => void;
   handlePortChange: (port: string, checked: boolean) => void;
   handleCommodityChange: (commodity: string, checked: boolean) => void;
-  setPeriodType: (type: PeriodType) => void;
-  setPeriodYear: (year: number) => void;
-  setPeriodHalfYear: (half: 1 | 2 | null) => void;
-  setPeriodQuarter: (quarter: 1 | 2 | 3 | 4 | null) => void;
-  setPeriodMonth: (month: number | null) => void;
   setStartDate: (date: Date | undefined) => void;
   setEndDate: (date: Date | undefined) => void;
   setIncludeCharts: (value: boolean) => void;
@@ -43,20 +37,17 @@ type RaportContextType = {
 const RaportContext = createContext<RaportContextType | undefined>(undefined);
 
 export const RaportProvider = ({ children }: { children: ReactNode }) => {
+  const [reportTab, setReportTab] = useState<ReportTab>('standard');
   const [selectedPorts, setSelectedPorts] = useState<string[]>([]);
   const [selectedCommodities, setSelectedCommodities] = useState<string[]>([]);
-  const [periodType, setPeriodType] = useState<PeriodType>('YEAR');
-  const [periodYear, setPeriodYear] = useState<number>(new Date().getFullYear());
-  const [periodHalfYear, setPeriodHalfYear] = useState<1 | 2 | null>(null);
-  const [periodQuarter, setPeriodQuarter] = useState<1 | 2 | 3 | 4 | null>(null);
-  const [periodMonth, setPeriodMonth] = useState<number | null>(null);
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date(2025, 0, 1));
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date(2025, 6, 2));
   const [endDate, setEndDate] = useState<Date | undefined>(new Date(2025, 11, 31));
   const [isReportGenerated, setIsReportGenerated] = useState(false);
   const [includeCharts, setIncludeCharts] = useState(false);
   const [selectedChartTypes, setSelectedChartTypes] = useState<ChartType[]>([]);
   const [showTrendLine, setShowTrendLine] = useState(false);
   const [trendType, setTrendType] = useState<TrendType>('linear');
+  const [breakdownByPeriod, setBreakdownByPeriod] = useState(false);
 
   const [submittedPorts, setSubmittedPorts] = useState<string[]>([]);
   const [submittedCommodities, setSubmittedCommodities] = useState<string[]>([]);
@@ -93,11 +84,6 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
   const resetFilters = () => {
     setSelectedPorts([]);
     setSelectedCommodities([]);
-    setPeriodType('YEAR');
-    setPeriodYear(new Date().getFullYear());
-    setPeriodHalfYear(null);
-    setPeriodQuarter(null);
-    setPeriodMonth(null);
     setStartDate(new Date(2025, 0, 1));
     setEndDate(new Date(2025, 11, 31));
     setSubmittedPorts([]);
@@ -107,6 +93,7 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
     setSelectedChartTypes([]);
     setShowTrendLine(false);
     setTrendType('linear');
+    setBreakdownByPeriod(false);
   };
 
   const generateReport = () => {
@@ -116,13 +103,10 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const value = {
+    reportTab,
+    setReportTab,
     selectedPorts,
     selectedCommodities,
-    periodType,
-    periodYear,
-    periodHalfYear,
-    periodQuarter,
-    periodMonth,
     startDate,
     endDate,
     isReportGenerated,
@@ -134,11 +118,6 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
     trendType,
     handlePortChange,
     handleCommodityChange,
-    setPeriodType,
-    setPeriodYear,
-    setPeriodHalfYear,
-    setPeriodQuarter,
-    setPeriodMonth,
     setStartDate,
     setEndDate,
     resetFilters,
@@ -147,6 +126,8 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
     toggleChartType,
     setShowTrendLine,
     setTrendType,
+    breakdownByPeriod,
+    setBreakdownByPeriod,
   };
 
   return <RaportContext.Provider value={value}>{children}</RaportContext.Provider>;

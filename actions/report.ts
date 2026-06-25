@@ -94,3 +94,54 @@ export async function fetchReportDataAction(
     reportDate: item.TransshipmentReportDate,
   }));
 }
+
+export async function fetchMultiplePeriodsAction(
+  appClients: AppClientsTypes[],
+  cargoTypes: CargoTypeItem[],
+  periods: PeriodRequest[]
+): Promise<{ periodId: string; rows: ReportRow[] }[]> {
+  const requestData: ReportRequestData = {
+    AppClients: appClients.map(c => ({
+      Id: c.id,
+      Enabled: c.enabled,
+      Name: c.name,
+      City: c.city,
+      OrgName: c.orgName,
+    })),
+    CargoTypes: cargoTypes.map(c => ({
+      Id: c.id,
+      AppClientId: c.appClientId,
+      CargoGroupCode: c.cargoGroupCode,
+      CargoSubGroupCode: c.cargoSubGroupCode,
+      Code: c.code,
+      Description: c.description,
+    })),
+    Periods: periods,
+  };
+
+  const data = await getProductGroups(requestData);
+
+  if (!Array.isArray(data) || data.length === 0) {
+    return periods.map(p => ({ periodId: p.Id, rows: [] }));
+  }
+
+  return (
+    data as {
+      productGroupReportRows?: {
+        Port: string;
+        Kod?: string;
+        Grupa?: string;
+        Ilosc: number;
+        TransshipmentReportDate?: string;
+      }[];
+    }[]
+  ).map((item, i) => ({
+    periodId: periods[i]?.Id ?? String(i),
+    rows: (item.productGroupReportRows ?? []).map(row => ({
+      port: row.Port,
+      kod: row.Kod ?? row.Grupa ?? '',
+      ilosc: Number(row.Ilosc),
+      reportDate: row.TransshipmentReportDate,
+    })),
+  }));
+}

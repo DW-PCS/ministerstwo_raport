@@ -1,5 +1,5 @@
 import type { TrendType } from '@/lib/helpers/trend-helpers';
-import type { ChartType, PeriodType } from '@/types';
+import type { ChartType } from '@/types';
 
 export const COLORS = [
   '#1a0069',
@@ -26,6 +26,11 @@ export const COLORS = [
 
 export const SZCZECIN_SWINOUJSCIE_OPTION = 'Szczecin i Świnoujście';
 export const GDYNIA_OPTION = 'Gdynia';
+
+export const MONTH_NAMES = [
+  'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+  'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień',
+];
 
 export const MONTH_ABBR = [
   'sty',
@@ -58,14 +63,8 @@ export const CHART_OPTIONS: { type: ChartType; label: string }[] = [
   { type: 'bar_timeseries', label: 'Kolumnowy – obroty wg miesiąca (linia trendu)' },
 ];
 
-export const PERIOD_TYPE_OPTIONS: { value: PeriodType; label: string }[] = [
-  { value: 'PERIOD', label: 'Okres' },
-  { value: 'YEAR', label: 'Rok' },
-  { value: 'HALF_YEAR', label: 'Półrocze' },
-  { value: 'QUARTER', label: 'Kwartał' },
-  { value: 'MONTH', label: 'Miesiąc' },
-
-];
+export const TEST_DATA_START = new Date('2025-07-01');
+export const TEST_DATA_END = new Date('2025-12-31');
 
 export const REPORT_TYPES = [
   {

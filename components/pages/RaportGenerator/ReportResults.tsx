@@ -60,6 +60,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
     submittedPorts,
     setShowTrendLine,
     setTrendType,
+    breakdownByPeriod,
   } = useRaportContext();
 
   const [showMathDetails, setShowMathDetails] = useState(false);
@@ -74,6 +75,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
     timeSeriesChartData,
     mathTableRows,
     mathSummary,
+    breakdownData,
     formatCompactTick,
     formatMassTooltip,
   } = useReportCharts(data);
@@ -123,63 +125,120 @@ export default function ReportResults({ data }: ReportResultsProps) {
           {chartData.length > 0 ? (
             <>
               <div className="overflow-x-auto px-6 py-4">
-                <Table className="w-auto">
-                  <TableHeader>
-                    <TableRow className="bg-[#1a0069] hover:bg-[#1a0069]">
-                      <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">
-                        Port
-                      </TableHead>
-                      {commodityKeys.map((key) => (
-                        <TableHead
-                          key={key}
-                          className="text-right font-bold text-white border-r border-white/20 last:border-r-0 whitespace-nowrap"
-                        >
-                          <AntdTooltip title={key}>
-                            <span>{key} [t]</span>
-                          </AntdTooltip>
+                {breakdownByPeriod ? (
+                  <Table className="w-auto">
+                    <TableHeader>
+                      <TableRow className="bg-[#1a0069] hover:bg-[#1a0069]">
+                        <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">
+                          Port
                         </TableHead>
+                        <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">
+                          Okres
+                        </TableHead>
+                        {commodityKeys.map((key) => (
+                          <TableHead
+                            key={key}
+                            className="text-right font-bold text-white border-r border-white/20 last:border-r-0 whitespace-nowrap"
+                          >
+                            <AntdTooltip title={key}>
+                              <span>{key} [t]</span>
+                            </AntdTooltip>
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(() => {
+                        let groupIndex = -1;
+                        let lastPort = "";
+                        return breakdownData.map((row, i) => {
+                          const isNewGroup = row.port !== lastPort;
+                          if (isNewGroup) { groupIndex++; lastPort = row.port; }
+                          const isEven = groupIndex % 2 === 0;
+                          return (
+                            <TableRow
+                              key={`${row.port}::${row.period}::${i}`}
+                              className={`hover:bg-purple-50 border-black/20 ${isNewGroup ? "border-t-2 border-t-[#1a0069]/20" : ""} ${isEven ? "bg-[#f5f3ff]" : "bg-white"}`}
+                            >
+                              <TableCell className="font-medium border-r border-black/20 whitespace-nowrap">
+                                {isNewGroup ? String(row.port) : ""}
+                              </TableCell>
+                              <TableCell className="border-r border-black/20 whitespace-nowrap text-muted-foreground">
+                                {String(row.period)}
+                              </TableCell>
+                              {commodityKeys.map((key) => (
+                                <TableCell
+                                  key={key}
+                                  className="text-right tabular-nums border-r border-black/20 last:border-r-0 whitespace-nowrap"
+                                >
+                                  {formatNumber(Number(row[key] || 0))}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          );
+                        });
+                      })()}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <Table className="w-auto">
+                    <TableHeader>
+                      <TableRow className="bg-[#1a0069] hover:bg-[#1a0069]">
+                        <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">
+                          Port
+                        </TableHead>
+                        {commodityKeys.map((key) => (
+                          <TableHead
+                            key={key}
+                            className="text-right font-bold text-white border-r border-white/20 last:border-r-0 whitespace-nowrap"
+                          >
+                            <AntdTooltip title={key}>
+                              <span>{key} [t]</span>
+                            </AntdTooltip>
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {chartData.map((port, rowIndex) => (
+                        <TableRow
+                          key={String(port.name)}
+                          className={`hover:bg-purple-50 border-black/20 ${rowIndex % 2 === 0 ? "bg-[#f5f3ff]" : "bg-white"}`}
+                        >
+                          <TableCell className="font-medium border-r border-black/20 whitespace-nowrap">
+                            {String(port.name)}
+                          </TableCell>
+                          {commodityKeys.map((key) => (
+                            <TableCell
+                              key={key}
+                              className="text-right tabular-nums border-r border-black/20 last:border-r-0 whitespace-nowrap"
+                            >
+                              {formatNumber(Number(port[key] || 0))}
+                            </TableCell>
+                          ))}
+                        </TableRow>
                       ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {chartData.map((port, rowIndex) => (
-                      <TableRow
-                        key={String(port.name)}
-                        className={`hover:bg-purple-50 border-black/20 ${rowIndex % 2 === 0 ? "bg-[#f5f3ff]" : "bg-white"}`}
-                      >
-                        <TableCell className="font-medium border-r border-black/20 whitespace-nowrap">
-                          {String(port.name)}
+                      <TableRow className="bg-[#e8e4f5] hover:bg-[#e8e4f5] border-black/20 font-bold">
+                        <TableCell className="font-bold border-r border-black/20 whitespace-nowrap">
+                          SUMA
                         </TableCell>
                         {commodityKeys.map((key) => (
                           <TableCell
                             key={key}
-                            className="text-right tabular-nums border-r border-black/20 last:border-r-0 whitespace-nowrap"
+                            className="text-right tabular-nums font-bold border-r border-black/20 last:border-r-0 whitespace-nowrap"
                           >
-                            {formatNumber(Number(port[key] || 0))}
+                            {formatNumber(
+                              chartData.reduce(
+                                (sum, port) => sum + Number(port[key] || 0),
+                                0
+                              )
+                            )}
                           </TableCell>
                         ))}
                       </TableRow>
-                    ))}
-                    <TableRow className="bg-[#e8e4f5] hover:bg-[#e8e4f5] border-black/20 font-bold">
-                      <TableCell className="font-bold border-r border-black/20 whitespace-nowrap">
-                        SUMA
-                      </TableCell>
-                      {commodityKeys.map((key) => (
-                        <TableCell
-                          key={key}
-                          className="text-right tabular-nums font-bold border-r border-black/20 last:border-r-0 whitespace-nowrap"
-                        >
-                          {formatNumber(
-                            chartData.reduce(
-                              (sum, port) => sum + Number(port[key] || 0),
-                              0
-                            )
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                    </TableBody>
+                  </Table>
+                )}
               </div>
 
               {includeCharts && selectedChartTypes.includes("bar_port") && (

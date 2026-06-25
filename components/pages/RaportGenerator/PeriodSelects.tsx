@@ -15,8 +15,14 @@ interface PeriodSelectsProps {
 }
 
 const PeriodSelects = ({ isLoading, onReset }: PeriodSelectsProps) => {
-  const { includeCharts, setIncludeCharts, selectedChartTypes, toggleChartType } =
-    useRaportContext();
+  const {
+    includeCharts,
+    setIncludeCharts,
+    selectedChartTypes,
+    toggleChartType,
+    breakdownByPeriod,
+    setBreakdownByPeriod,
+  } = useRaportContext();
 
   const handleIncludeChartsChange = (checked: boolean) => {
     setIncludeCharts(checked);
@@ -32,6 +38,16 @@ const PeriodSelects = ({ isLoading, onReset }: PeriodSelectsProps) => {
         <div className="space-y-4">
           <PeriodDates />
           <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="breakdown-by-period"
+                checked={breakdownByPeriod}
+                onCheckedChange={checked => setBreakdownByPeriod(Boolean(checked))}
+              />
+              <Label htmlFor="breakdown-by-period" className="cursor-pointer text-sm font-medium">
+                Rozbij wg okresu
+              </Label>
+            </div>
             <div className="flex items-center gap-2">
               <Checkbox
                 id="include-charts"

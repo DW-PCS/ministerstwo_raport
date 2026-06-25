@@ -3,7 +3,7 @@ import ReportList from "./report-list";
 
 export default function Home() {
   return (
-    <main className="max-w-5xl m-auto mt-14 px-4">
+    <main className="max-w-6xl m-auto mt-14 px-4">
       <AuthRequiredToast />
       <section className="space-y-2 mb-8">
         <h2 className="text-2xl font-semibold tracking-tight">Typy raportów</h2>

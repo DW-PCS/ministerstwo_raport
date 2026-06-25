@@ -30,6 +30,18 @@ export interface PeriodRequest {
 
 export type ChartType = 'bar_port' | 'bar_commodity' | 'pie' | 'bar_timeseries';
 
+export type ReportTab = 'standard' | 'comparison';
+
+export interface SelectedComparisonPeriod {
+  id: string;
+  type: 'YEAR' | 'HALF_YEAR' | 'QUARTER' | 'MONTH';
+  year: number;
+  halfYear: 1 | 2 | null;
+  quarter: 1 | 2 | 3 | 4 | null;
+  month: number | null;
+  label: string;
+}
+
 export type { TrendType, TrendResult, MathDetails } from '@/lib/helpers/trend-helpers';
 export type { PortOption } from '@/lib/helpers/port-filters';
 export type {

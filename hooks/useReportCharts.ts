@@ -113,6 +113,34 @@ export const useReportCharts = (data: ReportRow[]) => {
     return { sse, sst, r2: sst > 0 ? 1 - sse / sst : null, yMean };
   }, [mathTableRows, timeSeriesData]);
 
+  const breakdownData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+
+    type BreakdownEntry = { port: string; period: string; periodSort: string; [key: string]: unknown };
+    const grouped = new Map<string, BreakdownEntry>();
+
+    data.forEach(row => {
+      if (!row.reportDate) return;
+      const yearMonth = row.reportDate.slice(0, 7);
+      const key = `${row.port}::${yearMonth}`;
+
+      if (!grouped.has(key)) {
+        const [year, monthStr] = yearMonth.split('-');
+        const monthIndex = parseInt(monthStr ?? '1', 10) - 1;
+        const periodLabel = `${MONTH_NAMES[monthIndex] ?? monthStr} ${year}`;
+        grouped.set(key, { port: row.port, period: periodLabel, periodSort: yearMonth });
+      }
+
+      const entry = grouped.get(key)!;
+      entry[row.kod] = Number(entry[row.kod] || 0) + row.ilosc;
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => {
+      if (a.port !== b.port) return a.port.localeCompare(b.port, 'pl');
+      return a.periodSort.localeCompare(b.periodSort);
+    });
+  }, [data]);
+
   const formatCompactTick = (value: number | string) => {
     const num = Number(value || 0);
     if (num >= 1_000_000) return `${+(num / 1_000_000).toFixed(1)} mln`;
@@ -133,6 +161,7 @@ export const useReportCharts = (data: ReportRow[]) => {
     timeSeriesChartData,
     mathTableRows,
     mathSummary,
+    breakdownData,
     formatCompactTick,
     formatMassTooltip,
   };

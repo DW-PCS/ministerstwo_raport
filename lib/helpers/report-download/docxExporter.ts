@@ -1,9 +1,7 @@
 import { toast } from "@/components/ui/use-toast";
 import { formatNumber } from "@/lib/helpers/format-helpers";
-import {
-  BRAND_PRIMARY,
-  ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX,
-} from "@/lib/helpers/report-download/constants";
+import { BRAND_PRIMARY, ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX } from "@/lib/helpers/report-download/constants";
+import { buildDocxDocument } from "@/lib/helpers/report-download/documentTemplate";
 import { buildMonthlyTableSections } from "@/lib/helpers/report-download/monthlyTables";
 import { PdfDocxBaseOptions } from "@/lib/helpers/report-download/types";
 import {
@@ -14,13 +12,9 @@ import {
 import {
   AlignmentType,
   BorderStyle,
-  Document,
-  Footer,
-  Header,
   HeadingLevel,
   ImageRun,
   Packer,
-  PageNumber,
   Paragraph,
   ShadingType,
   Table,
@@ -58,11 +52,7 @@ export async function exportDocx({
         ? await buildChartImages(processedData, selectedChartTypes, { rawData, showTrendLine, trendType })
         : [];
     const monthlySections = ENABLE_MONTHLY_SECTIONS_IN_PDF_AND_DOCX
-      ? await buildMonthlyTableSections(
-          submittedPorts,
-          submittedCommodities,
-          endDate,
-        )
+      ? await buildMonthlyTableSections(submittedPorts, submittedCommodities, endDate)
       : [];
 
     const [logoBytes, , headerLogoBytes] = await Promise.all([
@@ -80,26 +70,16 @@ export async function exportDocx({
       children: processedData.headers.map(
         (header, headerIndex) =>
           new TableCell({
-            shading: {
-              type: ShadingType.SOLID,
-              color: brandPrimaryHex,
-              fill: brandPrimaryHex,
-            },
+            shading: { type: ShadingType.SOLID, color: brandPrimaryHex, fill: brandPrimaryHex },
             verticalAlign: VerticalAlign.CENTER,
-            margins: headerIndex === 0
-              ? { top: 60, bottom: 60, right: 30 }
-              : { top: 60, bottom: 60, right: 30 },
+            margins: { top: 60, bottom: 60, right: 30 },
             children: [
               new Paragraph({
-                alignment:
-                  headerIndex === 0 ? AlignmentType.LEFT : AlignmentType.RIGHT,
+                alignment: headerIndex === 0 ? AlignmentType.LEFT : AlignmentType.RIGHT,
                 indent: headerIndex === 0 ? undefined : { right: 80 },
                 children: [
                   new TextRun({
-                    text:
-                      headerIndex === 0
-                        ? String(header)
-                        : `${String(header)} [t]`,
+                    text: headerIndex === 0 ? String(header) : `${String(header)} [t]`,
                     bold: true,
                     color: "FFFFFF",
                     size: 18,
@@ -119,29 +99,17 @@ export async function exportDocx({
               new TableCell({
                 shading:
                   rowIndex % 2 === 0
-                    ? {
-                        type: ShadingType.SOLID,
-                        color: "F5F3FF",
-                        fill: "F5F3FF",
-                      }
+                    ? { type: ShadingType.SOLID, color: "F5F3FF", fill: "F5F3FF" }
                     : undefined,
                 verticalAlign: VerticalAlign.CENTER,
-                margins: cellIndex === 0
-                  ? { top: 60, bottom: 60, right: 30 }
-                  : { top: 60, bottom: 60, right: 30 },
+                margins: { top: 60, bottom: 60, right: 30 },
                 children: [
                   new Paragraph({
-                    alignment:
-                      cellIndex === 0
-                        ? AlignmentType.LEFT
-                        : AlignmentType.RIGHT,
+                    alignment: cellIndex === 0 ? AlignmentType.LEFT : AlignmentType.RIGHT,
                     indent: cellIndex === 0 ? undefined : { right: 80 },
                     children: [
                       new TextRun({
-                        text:
-                          cellIndex === 0
-                            ? String(cell)
-                            : formatNumber(Number(cell)),
+                        text: cellIndex === 0 ? String(cell) : formatNumber(Number(cell)),
                         size: 18,
                       }),
                     ],
@@ -156,26 +124,16 @@ export async function exportDocx({
       children: processedData.totalsRow.map(
         (cell, cellIndex) =>
           new TableCell({
-            shading: {
-              type: ShadingType.SOLID,
-              color: brandLightHex,
-              fill: brandLightHex,
-            },
+            shading: { type: ShadingType.SOLID, color: brandLightHex, fill: brandLightHex },
             verticalAlign: VerticalAlign.CENTER,
-            margins: cellIndex === 0
-              ? { top: 60, bottom: 60, right: 30 }
-              : { top: 60, bottom: 60, right: 30 },
+            margins: { top: 60, bottom: 60, right: 30 },
             children: [
               new Paragraph({
-                alignment:
-                  cellIndex === 0 ? AlignmentType.LEFT : AlignmentType.RIGHT,
+                alignment: cellIndex === 0 ? AlignmentType.LEFT : AlignmentType.RIGHT,
                 indent: cellIndex === 0 ? undefined : { right: 80 },
                 children: [
                   new TextRun({
-                    text:
-                      cellIndex === 0
-                        ? String(cell)
-                        : formatNumber(Number(cell)),
+                    text: cellIndex === 0 ? String(cell) : formatNumber(Number(cell)),
                     bold: true,
                     size: 18,
                     color: darkHex,
@@ -207,23 +165,18 @@ export async function exportDocx({
       DOCX_MIN_COL0,
     );
 
-    const docxNumColWidths = processedData.headers
-      .slice(1)
-      .map((header, idx) => {
-        const i = idx + 1;
-        const headerLen = `${String(header)} [t]`.length;
-        const allNumbers = [
-          ...processedData.rows.map((row) => formatNumber(Number(row[i]))),
-          formatNumber(Number(processedData.totalsRow[i])),
-        ];
-        const maxNumLen = Math.max(...allNumbers.map((v) => v.length));
-        return Math.ceil(
-          Math.max(
-            maxNumLen * DOCX_NUMBER_CHAR_WIDTH,
-            headerLen * DOCX_HEADER_CHAR_WIDTH,
-          ) + DOCX_CELL_PADDING,
-        );
-      });
+    const docxNumColWidths = processedData.headers.slice(1).map((header, idx) => {
+      const i = idx + 1;
+      const headerLen = `${String(header)} [t]`.length;
+      const allNumbers = [
+        ...processedData.rows.map((row) => formatNumber(Number(row[i]))),
+        formatNumber(Number(processedData.totalsRow[i])),
+      ];
+      const maxNumLen = Math.max(...allNumbers.map((v) => v.length));
+      return Math.ceil(
+        Math.max(maxNumLen * DOCX_NUMBER_CHAR_WIDTH, headerLen * DOCX_HEADER_CHAR_WIDTH) + DOCX_CELL_PADDING,
+      );
+    });
 
     const allNaturalWidths = [docxCol0NaturalWidth, ...docxNumColWidths];
     const naturalTotal = allNaturalWidths.reduce((a, b) => a + b, 0);
@@ -242,47 +195,39 @@ export async function exportDocx({
         bottom: { style: BorderStyle.SINGLE, size: 4, color: slateHex },
         left: { style: BorderStyle.SINGLE, size: 4, color: slateHex },
         right: { style: BorderStyle.SINGLE, size: 4, color: slateHex },
-        insideHorizontal: {
-          style: BorderStyle.SINGLE,
-          size: 2,
-          color: slateHex,
-        },
+        insideHorizontal: { style: BorderStyle.SINGLE, size: 2, color: slateHex },
         insideVertical: { style: BorderStyle.SINGLE, size: 2, color: slateHex },
       },
     });
 
+    const mkHeaderCell = (text: string) =>
+      new TableCell({
+        shading: { type: ShadingType.SOLID, color: "FFFFFF", fill: "FFFFFF" },
+        verticalAlign: VerticalAlign.CENTER,
+        children: [new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [new TextRun({ text, bold: true, size: 16 })],
+        })],
+      });
+
+    const mkValueCell = (
+      text: string,
+      alignment: (typeof AlignmentType)[keyof typeof AlignmentType],
+      isTotalRow: boolean,
+      bold = false,
+    ) =>
+      new TableCell({
+        shading: isTotalRow
+          ? { type: ShadingType.SOLID, color: "FFF9CC", fill: "FFF9CC" }
+          : undefined,
+        verticalAlign: VerticalAlign.CENTER,
+        children: [new Paragraph({
+          alignment,
+          children: [new TextRun({ text, bold, size: 16 })],
+        })],
+      });
+
     const monthlyTablesDocx = monthlySections.flatMap((section) => {
-      const mkHeaderCell = (text: string) =>
-        new TableCell({
-          shading: { type: ShadingType.SOLID, color: "FFFFFF", fill: "FFFFFF" },
-          verticalAlign: VerticalAlign.CENTER,
-          children: [
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text, bold: true, size: 16 })],
-            }),
-          ],
-        });
-
-      const mkValueCell = (
-        text: string,
-        alignment: (typeof AlignmentType)[keyof typeof AlignmentType],
-        isTotalRow: boolean,
-        bold = false,
-      ) =>
-        new TableCell({
-          shading: isTotalRow
-            ? { type: ShadingType.SOLID, color: "FFF9CC", fill: "FFF9CC" }
-            : undefined,
-          verticalAlign: VerticalAlign.CENTER,
-          children: [
-            new Paragraph({
-              alignment,
-              children: [new TextRun({ text, bold, size: 16 })],
-            }),
-          ],
-        });
-
       const monthlyHeaderRow = new TableRow({
         children: [
           mkHeaderCell("Lp."),
@@ -300,54 +245,14 @@ export async function exportDocx({
         (row) =>
           new TableRow({
             children: [
-              mkValueCell(
-                row.lp || "",
-                AlignmentType.CENTER,
-                row.isTotalRow,
-                row.isTotalRow,
-              ),
-              mkValueCell(
-                row.label,
-                AlignmentType.LEFT,
-                row.isTotalRow,
-                row.isTotalRow,
-              ),
-              mkValueCell(
-                formatNumber(row.prevMonth),
-                AlignmentType.RIGHT,
-                row.isTotalRow,
-                row.isTotalRow,
-              ),
-              mkValueCell(
-                formatNumber(row.prevYtd),
-                AlignmentType.RIGHT,
-                row.isTotalRow,
-                row.isTotalRow,
-              ),
-              mkValueCell(
-                formatNumber(row.currMonth),
-                AlignmentType.RIGHT,
-                row.isTotalRow,
-                row.isTotalRow,
-              ),
-              mkValueCell(
-                formatNumber(row.currYtd),
-                AlignmentType.RIGHT,
-                row.isTotalRow,
-                row.isTotalRow,
-              ),
-              mkValueCell(
-                formatNumber(row.ratioMonth),
-                AlignmentType.RIGHT,
-                row.isTotalRow,
-                row.isTotalRow,
-              ),
-              mkValueCell(
-                formatNumber(row.ratioYtd),
-                AlignmentType.RIGHT,
-                row.isTotalRow,
-                row.isTotalRow,
-              ),
+              mkValueCell(row.lp || "", AlignmentType.CENTER, row.isTotalRow, row.isTotalRow),
+              mkValueCell(row.label, AlignmentType.LEFT, row.isTotalRow, row.isTotalRow),
+              mkValueCell(formatNumber(row.prevMonth), AlignmentType.RIGHT, row.isTotalRow, row.isTotalRow),
+              mkValueCell(formatNumber(row.prevYtd), AlignmentType.RIGHT, row.isTotalRow, row.isTotalRow),
+              mkValueCell(formatNumber(row.currMonth), AlignmentType.RIGHT, row.isTotalRow, row.isTotalRow),
+              mkValueCell(formatNumber(row.currYtd), AlignmentType.RIGHT, row.isTotalRow, row.isTotalRow),
+              mkValueCell(formatNumber(row.ratioMonth), AlignmentType.RIGHT, row.isTotalRow, row.isTotalRow),
+              mkValueCell(formatNumber(row.ratioYtd), AlignmentType.RIGHT, row.isTotalRow, row.isTotalRow),
             ],
           }),
       );
@@ -362,16 +267,8 @@ export async function exportDocx({
           bottom: { style: BorderStyle.SINGLE, size: 4, color: "8A8A8A" },
           left: { style: BorderStyle.SINGLE, size: 4, color: "8A8A8A" },
           right: { style: BorderStyle.SINGLE, size: 4, color: "8A8A8A" },
-          insideHorizontal: {
-            style: BorderStyle.SINGLE,
-            size: 2,
-            color: "8A8A8A",
-          },
-          insideVertical: {
-            style: BorderStyle.SINGLE,
-            size: 2,
-            color: "8A8A8A",
-          },
+          insideHorizontal: { style: BorderStyle.SINGLE, size: 2, color: "8A8A8A" },
+          insideVertical: { style: BorderStyle.SINGLE, size: 2, color: "8A8A8A" },
         },
       });
 
@@ -379,257 +276,40 @@ export async function exportDocx({
         new Paragraph({
           heading: HeadingLevel.HEADING_2,
           spacing: { before: 280, after: 120 },
-          children: [
-            new TextRun({
-              text: section.title,
-              color: brandPrimaryHex,
-              bold: true,
-              size: 22,
-            }),
-          ],
+          children: [new TextRun({ text: section.title, color: brandPrimaryHex, bold: true, size: 22 })],
         }),
         monthlyTable,
       ];
     });
 
-    const pageHeader = new Header({
-      children: [
-        new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
-          layout: TableLayoutType.FIXED,
-          borders: {
-            top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            bottom: {
-              style: BorderStyle.SINGLE,
-              size: 8,
-              color: brandPrimaryHex,
-            },
-            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            insideHorizontal: {
-              style: BorderStyle.NONE,
-              size: 0,
-              color: "FFFFFF",
-            },
-            insideVertical: {
-              style: BorderStyle.NONE,
-              size: 0,
-              color: "FFFFFF",
-            },
-          },
-          rows: [
-            new TableRow({
-              children: [
-                new TableCell({
-                  width: { size: 20, type: WidthType.PERCENTAGE },
-                  verticalAlign: VerticalAlign.CENTER,
-                  children: [
-                    new Paragraph({
-                      children: [
-                        new ImageRun({
-                          data: headerLogoBytes,
-                          type: "png",
-                          transformation: { width: 92, height: 52 },
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-                new TableCell({
-                  width: { size: 80, type: WidthType.PERCENTAGE },
-                  verticalAlign: VerticalAlign.CENTER,
-                  children: [
-                    new Paragraph({
-                      alignment: AlignmentType.RIGHT,
-                      children: [
-                        new TextRun({
-                          text: periodText,
-                          color: "6B7280",
-                          size: 16,
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }),
-      ],
-    });
+    const chartContentDocx = chartImages.flatMap((chart, chartIndex) => [
+      new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        pageBreakBefore: chartIndex === 0,
+        spacing: { before: 480, after: 160 },
+        children: [new TextRun({ text: chart.title, color: brandPrimaryHex, bold: true, size: 26 })],
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 240 },
+        children: [
+          new ImageRun({
+            data: dataUrlToUint8ArrayFn(chart.image),
+            type: "png",
+            transformation: { width: 620, height: 340 },
+          }),
+        ],
+      }),
+    ]);
 
-    const pageFooter = new Footer({
-      children: [
-        new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
-          layout: TableLayoutType.FIXED,
-          borders: {
-            top: { style: BorderStyle.SINGLE, size: 4, color: slateHex },
-            bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            insideHorizontal: {
-              style: BorderStyle.NONE,
-              size: 0,
-              color: "FFFFFF",
-            },
-            insideVertical: {
-              style: BorderStyle.NONE,
-              size: 0,
-              color: "FFFFFF",
-            },
-          },
-          rows: [
-            new TableRow({
-              children: [
-                new TableCell({
-                  width: { size: 70, type: WidthType.PERCENTAGE },
-                  verticalAlign: VerticalAlign.CENTER,
-                  children: [
-                    new Paragraph({
-                      children: [
-                        new TextRun({
-                          text: "Dane wygenerowane z systemów portowych.",
-                          color: "9CA3AF",
-                          size: 14,
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-                new TableCell({
-                  width: { size: 30, type: WidthType.PERCENTAGE },
-                  verticalAlign: VerticalAlign.CENTER,
-                  children: [
-                    new Paragraph({
-                      alignment: AlignmentType.RIGHT,
-                      children: [
-                        new TextRun({
-                          text: "Strona ",
-                          color: "6B7280",
-                          size: 14,
-                        }),
-                        new TextRun({
-                          children: [PageNumber.CURRENT],
-                          color: "6B7280",
-                          size: 14,
-                        }),
-                        new TextRun({ text: " / ", color: "6B7280", size: 14 }),
-                        new TextRun({
-                          children: [PageNumber.TOTAL_PAGES],
-                          color: "6B7280",
-                          size: 14,
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }),
-      ],
-    });
-
-    const firstPageHeader = new Header({
-      children: [new Paragraph({ children: [] })],
-    });
-
-    const doc = new Document({
-      sections: [
-        {
-          properties: {
-            titlePage: true,
-            page: { margin: { top: 720, right: 500, bottom: 720, left: 500 } },
-          },
-          headers: { default: pageHeader, first: firstPageHeader },
-          footers: { default: pageFooter, first: pageFooter },
-          children: [
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              spacing: { before: 480, after: 120 },
-              children: [
-                new ImageRun({
-                  data: logoBytes,
-                  type: "png",
-                  transformation: { width: 186, height: 80 },
-                }),
-              ],
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 240 },
-              children: [
-                new TextRun({
-                  text: "Departament Gospodarki Morskiej i Żeglugi Śródlądowej",
-                  bold: true,
-                  color: "6B7280",
-                  size: 11,
-                }),
-              ],
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 120 },
-              children: [
-                new TextRun({
-                  text: "Raport obrotów portowych",
-                  bold: true,
-                  size: 52,
-                  color: brandPrimaryHex,
-                }),
-              ],
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 120 },
-              children: [
-                new TextRun({ text: periodText, size: 28, color: "374151" }),
-              ],
-            }),
-            new Paragraph({
-              heading: HeadingLevel.HEADING_2,
-              spacing: { before: 240, after: 160 },
-              children: [
-                new TextRun({
-                  text: "Tabela danych",
-                  color: brandPrimaryHex,
-                  bold: true,
-                  size: 26,
-                }),
-              ],
-            }),
-            reportTable,
-            ...monthlyTablesDocx,
-            ...chartImages.flatMap((chart, chartIndex) => [
-              new Paragraph({
-                heading: HeadingLevel.HEADING_2,
-                pageBreakBefore: chartIndex === 0,
-                spacing: { before: 480, after: 160 },
-                children: [
-                  new TextRun({
-                    text: chart.title,
-                    color: brandPrimaryHex,
-                    bold: true,
-                    size: 26,
-                  }),
-                ],
-              }),
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 240 },
-                children: [
-                  new ImageRun({
-                    data: dataUrlToUint8ArrayFn(chart.image),
-                    type: "png",
-                    transformation: { width: 620, height: 340 },
-                  }),
-                ],
-              }),
-            ]),
-          ],
-        },
-      ],
+    const doc = buildDocxDocument({
+      coverTitle: "Raport obrotów portowych",
+      coverSubtitle: periodText.replace("Okres: ", ""),
+      periodText,
+      mainTable: reportTable,
+      additionalContent: [...monthlyTablesDocx, ...chartContentDocx],
+      logoBytes,
+      headerLogoBytes,
     });
 
     const blob = await Packer.toBlob(doc);

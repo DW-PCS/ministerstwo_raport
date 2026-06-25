@@ -10,8 +10,8 @@ const Header = () => {
 
   return (
     <>
-      <header className="max-w-5xl mx-auto bg-[#1a0069] text-white p-4 rounded-[25px] shadow-lg mt-4">
-        <div className="max-w-5xl mx-auto flex justify-between items-center">
+      <header className="max-w-6xl mx-auto bg-[#1a0069] text-white p-4 rounded-[25px] shadow-lg mt-4">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div className="flex items-center">
             <Image
               src="/polskipcs.svg"

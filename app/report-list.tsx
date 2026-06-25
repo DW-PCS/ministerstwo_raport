@@ -8,23 +8,35 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
 import { REPORT_TYPES } from "@/constants";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from 'next/navigation';
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 function ReportList() {
   const { isAuthenticated } = useAuth();
-
+  const router = useRouter();
   const handleOpen = (href: string) => {
     if (!isAuthenticated) {
+      localStorage.setItem("lastReport", href);
       toast.error("Wymagane logowanie", {
         description: "Musisz się najpierw uwierzytelnić, aby wejść do raportów.",
       });
       return;
     }
-    window.open(href);
-  };
+    router.push(href);
 
+  };
+  useEffect(() => {
+    const lastReport = localStorage.getItem("lastReport");
+    console.log(lastReport, 'lastReport')
+    if (lastReport) {
+      localStorage.removeItem("lastReport");
+      router.push(lastReport);
+
+    }
+  }, [router]);
   return (
     <>
       {REPORT_TYPES.map((report) => (

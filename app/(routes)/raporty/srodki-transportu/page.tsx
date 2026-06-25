@@ -18,7 +18,7 @@ export default function TransportModesReportPreviewPage() {
   ];
 
   return (
-    <main className="max-w-5xl m-auto mt-6 px-4 space-y-6">
+    <main className="max-w-6xl m-auto mt-6 px-4 space-y-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
