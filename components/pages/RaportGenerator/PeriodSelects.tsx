@@ -20,14 +20,29 @@ const PeriodSelects = ({ isLoading, onReset }: PeriodSelectsProps) => {
     setIncludeCharts,
     selectedChartTypes,
     toggleChartType,
+    setSelectedChartTypes,
     breakdownByPeriod,
     setBreakdownByPeriod,
   } = useRaportContext();
 
+  const availableChartOptions = CHART_OPTIONS.filter(({ type }) =>
+    breakdownByPeriod ? type === 'bar_timeseries' : type !== 'bar_timeseries'
+  );
+
+  const handleBreakdownChange = (checked: boolean) => {
+    setBreakdownByPeriod(checked);
+    if (includeCharts) {
+      const newOptions = CHART_OPTIONS.filter(({ type }) =>
+        checked ? type === 'bar_timeseries' : type !== 'bar_timeseries'
+      );
+      setSelectedChartTypes(newOptions.map(o => o.type));
+    }
+  };
+
   const handleIncludeChartsChange = (checked: boolean) => {
     setIncludeCharts(checked);
-    if (checked && selectedChartTypes.length === 0) {
-      CHART_OPTIONS.forEach(({ type }) => toggleChartType(type));
+    if (checked) {
+      setSelectedChartTypes(availableChartOptions.map(o => o.type));
     }
   };
 
@@ -42,7 +57,7 @@ const PeriodSelects = ({ isLoading, onReset }: PeriodSelectsProps) => {
               <Checkbox
                 id="breakdown-by-period"
                 checked={breakdownByPeriod}
-                onCheckedChange={checked => setBreakdownByPeriod(Boolean(checked))}
+                onCheckedChange={checked => handleBreakdownChange(Boolean(checked))}
               />
               <Label htmlFor="breakdown-by-period" className="cursor-pointer text-sm font-medium">
                 Rozbij wg okresu
@@ -70,7 +85,7 @@ const PeriodSelects = ({ isLoading, onReset }: PeriodSelectsProps) => {
                 >
                   <div className="ml-6 space-y-2 rounded-lg border border-black/10 bg-[#f5f3ff] p-3">
                     <p className="text-xs font-semibold text-[#1a0069]">Rodzaj wykresu:</p>
-                    {CHART_OPTIONS.map(({ type, label }) => (
+                    {availableChartOptions.map(({ type, label }) => (
                       <div key={type} className="flex items-center gap-2">
                         <Checkbox
                           id={`chart-type-${type}`}

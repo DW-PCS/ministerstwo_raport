@@ -11,6 +11,13 @@ export interface RawReportRow {
   ilosc: number;
 }
 
+export interface BreakdownRow {
+  port: string;
+  period: string;
+  periodSort: string;
+  [key: string]: unknown;
+}
+
 export interface ProcessedData {
   portData: Record<string, Record<string, number>>;
   commodityNames: string[];

@@ -29,14 +29,13 @@ function ReportList() {
 
   };
   useEffect(() => {
+    if (!isAuthenticated) return;
     const lastReport = localStorage.getItem("lastReport");
-    console.log(lastReport, 'lastReport')
     if (lastReport) {
       localStorage.removeItem("lastReport");
       router.push(lastReport);
-
     }
-  }, [router]);
+  }, [isAuthenticated, router]);
   return (
     <>
       {REPORT_TYPES.map((report) => (

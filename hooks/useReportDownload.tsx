@@ -3,6 +3,7 @@ import { exportCsv } from '@/lib/helpers/report-download/csvExporter';
 import { exportDocx } from '@/lib/helpers/report-download/docxExporter';
 import { exportPdf } from '@/lib/helpers/report-download/pdfExporter';
 import type {
+  BreakdownRow,
   FileFormat,
   ProcessedData,
   RawReportRow,
@@ -15,7 +16,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 export type { FileFormat, ReportDataItem, UseReportDownloadReturn };
 
-export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow[]): UseReportDownloadReturn => {
+export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow[], breakdownData?: BreakdownRow[]): UseReportDownloadReturn => {
   const {
     isReportGenerated,
     includeCharts,
@@ -24,6 +25,7 @@ export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow
     submittedPorts,
     showTrendLine,
     trendType,
+    breakdownByPeriod,
   } = useRaportContext();
 
   const isDownloadEnabled = useMemo(
@@ -31,6 +33,22 @@ export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow
     [isReportGenerated, data]
   );
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
+
+  const processBreakdownData = useCallback((): ProcessedData => {
+    if (!breakdownData || breakdownData.length === 0) {
+      return { portData: {}, commodityNames: [], headers: [], rows: [], totalsRow: [] };
+    }
+    const commodityKeys = Object.keys(breakdownData[0]).filter(
+      k => k !== 'port' && k !== 'period' && k !== 'periodSort'
+    );
+    const headers = ['Port', 'Okres', ...commodityKeys];
+    const rows: Array<Array<string | number>> = breakdownData.map(row => [
+      row.port,
+      row.period,
+      ...commodityKeys.map(k => Number(row[k] || 0)),
+    ]);
+    return { portData: {}, commodityNames: commodityKeys, headers, rows, totalsRow: [] };
+  }, [breakdownData]);
 
   const processData = useCallback((): ProcessedData => {
     const portData: Record<string, Record<string, number>> = {};
@@ -93,12 +111,14 @@ export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow
         return;
       }
 
+      const activeProcessData = breakdownByPeriod ? processBreakdownData : processData;
+
       setIsDownloading(true);
       try {
         if (format === 'csv') {
           exportCsv({
             isDownloadEnabled,
-            processData,
+            processData: activeProcessData,
             getFilename,
             startDate,
             endDate,
@@ -106,7 +126,7 @@ export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow
         } else if (format === 'pdf') {
           await exportPdf({
             isDownloadEnabled,
-            processData,
+            processData: activeProcessData,
             formatPeriodText,
             getFilename,
             includeCharts,
@@ -122,7 +142,7 @@ export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow
         } else if (format === 'docx') {
           await exportDocx({
             isDownloadEnabled,
-            processData,
+            processData: activeProcessData,
             formatPeriodText,
             getFilename,
             includeCharts,
@@ -138,7 +158,7 @@ export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow
         } else if (format === 'xlsx') {
           await exportXlsx({
             isDownloadEnabled,
-            processData,
+            processData: activeProcessData,
             getFilename,
             startDate,
             endDate,
@@ -149,10 +169,12 @@ export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow
       }
     },
     [
+      breakdownByPeriod,
       formatPeriodText,
       getFilename,
       includeCharts,
       isDownloadEnabled,
+      processBreakdownData,
       processData,
       rawData,
       selectedChartTypes,

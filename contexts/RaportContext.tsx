@@ -28,6 +28,7 @@ type RaportContextType = {
   setEndDate: (date: Date | undefined) => void;
   setIncludeCharts: (value: boolean) => void;
   toggleChartType: (type: ChartType) => void;
+  setSelectedChartTypes: (types: ChartType[]) => void;
   setShowTrendLine: (value: boolean) => void;
   setTrendType: (type: TrendType) => void;
   resetFilters: () => void;
@@ -128,6 +129,7 @@ export const RaportProvider = ({ children }: { children: ReactNode }) => {
     setTrendType,
     breakdownByPeriod,
     setBreakdownByPeriod,
+    setSelectedChartTypes,
   };
 
   return <RaportContext.Provider value={value}>{children}</RaportContext.Provider>;

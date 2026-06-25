@@ -1,7 +1,6 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -57,12 +56,6 @@ const ComparisonPeriodDates = ({ hook }: ComparisonPeriodDatesProps) => {
 
   const [draftType, setDraftType] = useState<DraftType>('MONTH');
   const [draftYear, setDraftYear] = useState(currentYear - 1);
-  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
-
-  const handleTypeChange = (val: DraftType) => {
-    setDraftType(val);
-    setSelectedIndices([]);
-  };
 
   const getAddedPeriod = (index: number) =>
     selectedPeriods.find(
@@ -80,65 +73,39 @@ const ComparisonPeriodDates = ({ hook }: ComparisonPeriodDatesProps) => {
 
   const isAlreadyAdded = (index: number) => !!getAddedPeriod(index);
 
-  const toggleIndex = (index: number) => {
-    if (isAlreadyAdded(index)) return;
-    setSelectedIndices(prev =>
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
-    );
-  };
-
-  const newCount = selectedIndices.filter(i => !isAlreadyAdded(i)).length;
-
-  const handleAdd = () => {
-    if (draftType === 'YEAR') {
-      if (isAlreadyAdded(0)) return;
-      addPeriod({
-        id: `YEAR-${draftYear}-${Date.now()}`,
-        type: 'YEAR',
-        year: draftYear,
-        halfYear: null,
-        quarter: null,
-        month: null,
-        label: String(draftYear),
-      });
+  const handleToggle = (index: number) => {
+    const existing = getAddedPeriod(index);
+    if (existing) {
+      removePeriod(existing.id);
       return;
     }
-
-    selectedIndices.filter(i => !isAlreadyAdded(i)).forEach(index => {
-      const period: SelectedComparisonPeriod = {
-        id: `${draftType}-${draftYear}-${index}-${Date.now()}-${Math.random()}`,
-        type: draftType,
-        year: draftYear,
-        halfYear: draftType === 'HALF_YEAR' ? (index as 1 | 2) : null,
-        quarter: draftType === 'QUARTER' ? (index as 1 | 2 | 3 | 4) : null,
-        month: draftType === 'MONTH' ? index : null,
-        label: buildLabel(draftType, draftYear, index),
-      };
-      addPeriod(period);
+    addPeriod({
+      id: `${draftType}-${draftYear}-${index}-${Date.now()}-${Math.random()}`,
+      type: draftType,
+      year: draftYear,
+      halfYear: draftType === 'HALF_YEAR' ? (index as 1 | 2) : null,
+      quarter: draftType === 'QUARTER' ? (index as 1 | 2 | 3 | 4) : null,
+      month: draftType === 'MONTH' ? index : null,
+      label: buildLabel(draftType, draftYear, index),
     });
-    setSelectedIndices([]);
   };
 
   const showBanner = selectedPeriods.some(isOutsideTestRange);
-  const yearAlreadyAdded = draftType === 'YEAR' && isAlreadyAdded(0);
 
   const toggleBtnClass = (index: number) => {
     const added = isAlreadyAdded(index);
-    const active = selectedIndices.includes(index);
     return cn(
       'rounded-md border text-sm font-medium transition-all select-none cursor-pointer',
       added
         ? 'bg-[#1a0069]/10 border-[#1a0069]/20 text-[#1a0069]/50 hover:bg-red-50 hover:border-red-300 hover:text-red-500'
-        : active
-          ? 'bg-[#1a0069] border-[#1a0069] text-white shadow-sm'
-          : 'bg-white border-gray-200 text-gray-700 hover:border-[#1a0069]/50 hover:bg-[#f5f3ff]'
+        : 'bg-white border-gray-200 text-gray-700 hover:border-[#1a0069]/50 hover:bg-[#f5f3ff]'
     );
   };
 
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <Select value={draftType} onValueChange={val => handleTypeChange(val as DraftType)}>
+        <Select value={draftType} onValueChange={val => setDraftType(val as DraftType)}>
           <SelectTrigger className="flex-1">
             <SelectValue />
           </SelectTrigger>
@@ -153,10 +120,7 @@ const ComparisonPeriodDates = ({ hook }: ComparisonPeriodDatesProps) => {
 
         <Select
           value={String(draftYear)}
-          onValueChange={val => {
-            setDraftYear(Number(val));
-            setSelectedIndices([]);
-          }}
+          onValueChange={val => setDraftYear(Number(val))}
         >
           <SelectTrigger className="flex-1">
             <SelectValue />
@@ -173,27 +137,16 @@ const ComparisonPeriodDates = ({ hook }: ComparisonPeriodDatesProps) => {
 
       {draftType === 'MONTH' && (
         <div className="grid grid-cols-4 gap-1.5">
-          {MONTH_ABBR.map((abbr, i) => {
-            const added = isAlreadyAdded(i + 1);
-            return (
-              <button
-                key={i + 1}
-                type="button"
-                onClick={() => {
-                  if (added) {
-                    const p = getAddedPeriod(i + 1);
-                    if (p) removePeriod(p.id);
-                  } else {
-                    toggleIndex(i + 1);
-                  }
-                }}
-                className={cn(toggleBtnClass(i + 1), 'py-2 flex items-center justify-center gap-1')}
-              >
-                {abbr}
-
-              </button>
-            );
-          })}
+          {MONTH_ABBR.map((abbr, i) => (
+            <button
+              key={i + 1}
+              type="button"
+              onClick={() => handleToggle(i + 1)}
+              className={cn(toggleBtnClass(i + 1), 'py-2 flex items-center justify-center gap-1')}
+            >
+              {abbr}
+            </button>
+          ))}
         </div>
       )}
 
@@ -205,14 +158,7 @@ const ComparisonPeriodDates = ({ hook }: ComparisonPeriodDatesProps) => {
               <button
                 key={i + 1}
                 type="button"
-                onClick={() => {
-                  if (added) {
-                    const p = getAddedPeriod(i + 1);
-                    if (p) removePeriod(p.id);
-                  } else {
-                    toggleIndex(i + 1);
-                  }
-                }}
+                onClick={() => handleToggle(i + 1)}
                 className={cn(toggleBtnClass(i + 1), 'py-2.5 flex items-center justify-center gap-1.5')}
               >
                 {label}
@@ -231,14 +177,7 @@ const ComparisonPeriodDates = ({ hook }: ComparisonPeriodDatesProps) => {
               <button
                 key={i + 1}
                 type="button"
-                onClick={() => {
-                  if (added) {
-                    const p = getAddedPeriod(i + 1);
-                    if (p) removePeriod(p.id);
-                  } else {
-                    toggleIndex(i + 1);
-                  }
-                }}
+                onClick={() => handleToggle(i + 1)}
                 className={cn(toggleBtnClass(i + 1), 'py-2.5 flex items-center justify-center gap-1.5')}
               >
                 {label}
@@ -249,21 +188,6 @@ const ComparisonPeriodDates = ({ hook }: ComparisonPeriodDatesProps) => {
         </div>
       )}
 
-      <Button
-        type="button"
-        onClick={handleAdd}
-        disabled={draftType !== 'YEAR' ? newCount === 0 : yearAlreadyAdded}
-        className="w-full bg-[#1a0069] hover:bg-[#1a0069]/90 text-white disabled:opacity-40"
-      >
-        {draftType === 'YEAR'
-          ? yearAlreadyAdded
-            ? `Rok ${draftYear} już dodany`
-            : `Dodaj rok ${draftYear}`
-          : newCount === 0
-            ? 'Zaznacz okresy powyżej'
-            : `Dodaj zaznaczone (${newCount})`}
-      </Button>
-
       {selectedPeriods.length > 0 && (
         <div className="space-y-1.5">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-0.5">
@@ -271,13 +195,13 @@ const ComparisonPeriodDates = ({ hook }: ComparisonPeriodDatesProps) => {
               <Badge
                 key={p.id}
                 variant="secondary"
-                className="flex justify-between py-1 pr-1.5 text-[12px]  bg-[#f5f3ff] text-[#1a0069] border border-[#1a0069]/20 w-full"
+                className="flex justify-between py-1 pr-1.5 text-[12px] bg-[#f5f3ff] text-[#1a0069] border border-[#1a0069]/20 w-full"
               >
                 {p.label}
                 <button
                   type="button"
                   onClick={() => removePeriod(p.id)}
-                  className="ml-0.5 rounded-full hover:bg-[#1a0069]/10 "
+                  className="ml-0.5 rounded-full hover:bg-[#1a0069]/10"
                 >
                   <X className="h-3 w-3 ml-auto" />
                 </button>

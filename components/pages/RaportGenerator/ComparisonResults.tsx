@@ -26,8 +26,18 @@ import {
 } from '@/lib/helpers/report-download/comparisonExporter';
 import { cn } from '@/lib/utils';
 import type { SelectedComparisonPeriod } from '@/types';
-import { Download, Loader2 } from 'lucide-react';
+import { ArrowDownUp, Download, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+
+type SortOrder = 'chronological' | 'selection';
+
+function getPeriodSortKey(p: SelectedComparisonPeriod): number {
+  const base = p.year * 100;
+  if (p.type === 'MONTH') return base + (p.month ?? 1);
+  if (p.type === 'QUARTER') return base + (p.quarter ?? 1) * 3;
+  if (p.type === 'HALF_YEAR') return base + (p.halfYear ?? 1) * 6;
+  return base;
+}
 
 const TYPE_SUFFIX: Record<SelectedComparisonPeriod['type'], string> = {
   YEAR: 'rok do roku',
@@ -59,6 +69,28 @@ function formatChange(change: number | null): { text: string; className: string 
 export default function ComparisonResults({ hook }: ComparisonResultsProps) {
   const { chainRows, submittedPeriods, isGenerated } = hook;
   const [isDownloading, setIsDownloading] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('chronological');
+
+  const sortedRows = [...chainRows]
+    .sort((a, b) => {
+      if (a.port !== b.port) return a.port.localeCompare(b.port, 'pl');
+      if (a.group !== b.group) return a.group.localeCompare(b.group, 'pl');
+      if (sortOrder === 'chronological') {
+        const pa = submittedPeriods[a.periodIndex];
+        const pb = submittedPeriods[b.periodIndex];
+        return getPeriodSortKey(pa) - getPeriodSortKey(pb);
+      }
+      return a.periodIndex - b.periodIndex;
+    })
+    .map((row, idx, arr) => {
+      const prev = idx > 0 ? arr[idx - 1] : null;
+      const sameGroup = prev && prev.port === row.port && prev.group === row.group;
+      const change =
+        sameGroup && prev.tonnage !== 0
+          ? ((row.tonnage - prev.tonnage) / prev.tonnage) * 100
+          : null;
+      return { ...row, change };
+    });
 
   const title = getTitle(submittedPeriods);
   const firstLabel = submittedPeriods[0]?.label ?? '';
@@ -104,7 +136,17 @@ export default function ComparisonResults({ hook }: ComparisonResultsProps) {
     <Card id="report-results" className="shadow-lg rounded-2xl overflow-hidden border-0">
       <CardHeader className="border-b bg-white border-black/20 flex flex-row items-center justify-between">
         <CardTitle className="text-xl font-semibold">{title}</CardTitle>
-        <DropdownMenu>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSortOrder(o => o === 'chronological' ? 'selection' : 'chronological')}
+            className="flex items-center gap-1.5 text-xs"
+          >
+            <ArrowDownUp size={13} />
+            {sortOrder === 'chronological' ? 'Chronologicznie' : 'Kolejność wyboru'}
+          </Button>
+          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button disabled={isDownloading} className="flex cursor-pointer items-center gap-2">
               {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
@@ -126,6 +168,7 @@ export default function ComparisonResults({ hook }: ComparisonResultsProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </CardHeader>
       <CardContent className="p-0 bg-white">
         <div className="overflow-x-auto px-6 py-4">
@@ -140,9 +183,9 @@ export default function ComparisonResults({ hook }: ComparisonResultsProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {chainRows.map((row, idx) => {
+              {sortedRows.map((row, idx) => {
                 const { text, className } = formatChange(row.change);
-                const prevRow = chainRows[idx - 1];
+                const prevRow = sortedRows[idx - 1];
                 const isNewGroup = idx === 0 || prevRow.port !== row.port || prevRow.group !== row.group;
                 return (
                   <TableRow

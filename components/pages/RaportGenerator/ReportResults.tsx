@@ -116,6 +116,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
         <ReportDownloadButton
           data={chartData}
           rawData={data}
+          breakdownData={breakdownData}
           startDate={startDate}
           endDate={endDate}
         />
@@ -241,7 +242,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                 )}
               </div>
 
-              {includeCharts && selectedChartTypes.includes("bar_port") && (
+              {includeCharts && !breakdownByPeriod && selectedChartTypes.includes("bar_port") && (
                 <>
                   <div className="px-6 pt-6 pb-2">
                     <p className="text-sm font-semibold text-[#1a0069]">
@@ -283,7 +284,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                 </>
               )}
 
-              {includeCharts &&
+              {includeCharts && !breakdownByPeriod &&
                 selectedChartTypes.includes("bar_commodity") && (
                   <>
                     <div className="px-6 pt-6 pb-2">
@@ -335,7 +336,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                   </>
                 )}
 
-              {includeCharts && selectedChartTypes.includes("pie") && (
+              {includeCharts && !breakdownByPeriod && selectedChartTypes.includes("pie") && (
                 <>
                   <div className="px-6 pt-6 pb-2">
                     <p className="text-sm font-semibold text-[#1a0069]">
@@ -375,7 +376,7 @@ export default function ReportResults({ data }: ReportResultsProps) {
                 </>
               )}
 
-              {includeCharts &&
+              {includeCharts && breakdownByPeriod &&
                 selectedChartTypes.includes("bar_timeseries") && (
                   <>
                     <div className="px-6 pt-6 pb-2 flex flex-wrap items-center justify-between gap-3">

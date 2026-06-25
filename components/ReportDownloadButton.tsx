@@ -8,20 +8,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import useReportDownload, { ReportDataItem } from '@/hooks/useReportDownload';
-import type { RawReportRow } from '@/lib/helpers/report-download/types';
+import type { BreakdownRow, RawReportRow } from '@/lib/helpers/report-download/types';
 
 import { Download, Loader2 } from 'lucide-react';
 
 interface ReportDownloadButtonProps {
   data: ReportDataItem[];
   rawData?: RawReportRow[];
+  breakdownData?: BreakdownRow[];
   className?: string;
   startDate?: Date;
   endDate?: Date;
 }
 
-const ReportDownloadButton = ({ data, rawData, startDate, endDate }: ReportDownloadButtonProps) => {
-  const { isDownloadEnabled, downloadReport, isDownloading } = useReportDownload(data, rawData);
+const ReportDownloadButton = ({ data, rawData, breakdownData, startDate, endDate }: ReportDownloadButtonProps) => {
+  const { isDownloadEnabled, downloadReport, isDownloading } = useReportDownload(data, rawData, breakdownData);
 
   return (
     <div className="flex flex-col items-end gap-1">
