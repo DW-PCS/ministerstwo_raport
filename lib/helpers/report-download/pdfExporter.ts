@@ -134,25 +134,31 @@ export async function exportPdf({
         headerRows: 1,
         widths: tableWidths,
         body: [
-          processedData.headers.map((header, headerIndex) => ({
-            text: headerIndex === 0 ? String(header) : `${String(header)} [t]`,
-            color: "#ffffff",
-            bold: true,
-            fontSize: 9,
-            alignment: headerIndex === 0 ? "left" : "right",
-            fillColor: BRAND_PRIMARY,
-            margin: headerIndex === 0 ? [4, 4, 4, 4] : [10, 4, 0, 4],
-            noWrap: headerIndex !== 0,
-          })),
-          ...processedData.rows.map((row, rowIndex) =>
-            row.map((cell, cellIndex) => ({
-              text: cellIndex === 0 ? String(cell) : formatNumber(Number(cell)),
+          processedData.headers.map((header, headerIndex) => {
+            const isNumericCol = headerIndex > 0 && processedData.commodityNames.includes(String(header));
+            return {
+              text: isNumericCol ? `${String(header)} [t]` : String(header),
+              color: "#ffffff",
+              bold: true,
               fontSize: 9,
-              alignment: cellIndex === 0 ? "left" : "right",
-              fillColor: rowIndex % 2 === 0 ? "#f5f3ff" : undefined,
-              margin: cellIndex === 0 ? [4, 3, 4, 3] : [10, 3, 0, 3],
-              noWrap: cellIndex !== 0,
-            })),
+              alignment: isNumericCol ? "right" : "left",
+              fillColor: BRAND_PRIMARY,
+              margin: isNumericCol ? [10, 4, 0, 4] : [4, 4, 4, 4],
+              noWrap: isNumericCol,
+            };
+          }),
+          ...processedData.rows.map((row, rowIndex) =>
+            row.map((cell) => {
+              const isNumericCell = typeof cell === 'number';
+              return {
+                text: isNumericCell ? formatNumber(cell) : String(cell),
+                fontSize: 9,
+                alignment: isNumericCell ? "right" : "left",
+                fillColor: rowIndex % 2 === 0 ? "#f5f3ff" : undefined,
+                margin: isNumericCell ? [10, 3, 0, 3] : [4, 3, 4, 3],
+                noWrap: isNumericCell,
+              };
+            }),
           ),
           ...(processedData.totalsRow.length > 0 ? [processedData.totalsRow.map((cell, cellIndex) => ({
             text: cellIndex === 0 ? String(cell) : formatNumber(Number(cell)),

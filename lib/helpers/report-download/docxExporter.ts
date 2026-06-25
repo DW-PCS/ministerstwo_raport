@@ -66,20 +66,24 @@ export async function exportDocx({
     const slateHex = "CBD5E1";
     const darkHex = "0F172A";
 
+    const isCommodityHeader = (header: string | number) =>
+      processedData.commodityNames.includes(String(header));
+
     const headerRow = new TableRow({
       children: processedData.headers.map(
-        (header, headerIndex) =>
-          new TableCell({
+        (header, headerIndex) => {
+          const isNumericCol = headerIndex > 0 && isCommodityHeader(header);
+          return new TableCell({
             shading: { type: ShadingType.SOLID, color: brandPrimaryHex, fill: brandPrimaryHex },
             verticalAlign: VerticalAlign.CENTER,
             margins: { top: 60, bottom: 60, right: 30 },
             children: [
               new Paragraph({
-                alignment: headerIndex === 0 ? AlignmentType.LEFT : AlignmentType.RIGHT,
-                indent: headerIndex === 0 ? undefined : { right: 80 },
+                alignment: isNumericCol ? AlignmentType.RIGHT : AlignmentType.LEFT,
+                indent: isNumericCol ? { right: 80 } : undefined,
                 children: [
                   new TextRun({
-                    text: headerIndex === 0 ? String(header) : `${String(header)} [t]`,
+                    text: isNumericCol ? `${String(header)} [t]` : String(header),
                     bold: true,
                     color: "FFFFFF",
                     size: 18,
@@ -87,7 +91,8 @@ export async function exportDocx({
                 ],
               }),
             ],
-          }),
+          });
+        }
       ),
     });
 
@@ -95,8 +100,9 @@ export async function exportDocx({
       (row, rowIndex) =>
         new TableRow({
           children: row.map(
-            (cell, cellIndex) =>
-              new TableCell({
+            (cell) => {
+              const isNumericCell = typeof cell === 'number';
+              return new TableCell({
                 shading:
                   rowIndex % 2 === 0
                     ? { type: ShadingType.SOLID, color: "F5F3FF", fill: "F5F3FF" }
@@ -105,17 +111,18 @@ export async function exportDocx({
                 margins: { top: 60, bottom: 60, right: 30 },
                 children: [
                   new Paragraph({
-                    alignment: cellIndex === 0 ? AlignmentType.LEFT : AlignmentType.RIGHT,
-                    indent: cellIndex === 0 ? undefined : { right: 80 },
+                    alignment: isNumericCell ? AlignmentType.RIGHT : AlignmentType.LEFT,
+                    indent: isNumericCell ? { right: 80 } : undefined,
                     children: [
                       new TextRun({
-                        text: cellIndex === 0 ? String(cell) : formatNumber(Number(cell)),
+                        text: isNumericCell ? formatNumber(cell) : String(cell),
                         size: 18,
                       }),
                     ],
                   }),
                 ],
-              }),
+              });
+            }
           ),
         }),
     );
