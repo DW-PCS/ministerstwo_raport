@@ -88,12 +88,14 @@ export const useReportDownload = (data: ReportDataItem[], rawData?: RawReportRow
 
   const getFilename = useCallback(
     (format: FileFormat, startDate?: Date, endDate?: Date): string => {
-      const date = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const date = now.toISOString().split('T')[0];
+      const time = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
       if (startDate && endDate) {
         const [s, e] = formatPeriodText(startDate, endDate).replace('Okres: ', '').split(' - ');
-        return `raport-portowy-${s}-do-${e}.${format}`;
+        return `raport-portowy-${s}-do-${e}_${date}_${time}.${format}`;
       }
-      return `raport-portowy-${date}.${format}`;
+      return `raport-portowy-${date}_${time}.${format}`;
     },
     [formatPeriodText]
   );

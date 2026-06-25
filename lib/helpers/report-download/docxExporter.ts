@@ -186,7 +186,7 @@ export async function exportDocx({
     docxColumnWidths[docxColumnWidths.length - 1] += DOCX_PAGE_WIDTH - scaledSum;
 
     const reportTable = new Table({
-      rows: [headerRow, ...dataRows, totalsRow],
+      rows: [headerRow, ...dataRows, ...(processedData.totalsRow.length > 0 ? [totalsRow] : [])],
       width: { size: 100, type: WidthType.PERCENTAGE },
       layout: TableLayoutType.FIXED,
       columnWidths: docxColumnWidths,

@@ -9,8 +9,6 @@ import {
   fetchImageAsDataUrl,
 } from "@/lib/helpers/report-download/visualUtils";
 import { BRAND_DARK, BRAND_LIGHT, BRAND_PRIMARY } from "@/lib/helpers/report-download/constants";
-import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
 
 export async function exportPdf({
   isDownloadEnabled,
@@ -40,17 +38,18 @@ export async function exportPdf({
       ? await buildMonthlyTableSections(submittedPorts, submittedCommodities, endDate)
       : [];
 
-    const [logoDataUrl, headerLogoDataUrl] = await Promise.all([
+    const [logoDataUrl, headerLogoDataUrl, pdfMakeModule, pdfFontsModule] = await Promise.all([
       fetchImageAsDataUrl("/05_znak_uproszczony_kolor_biale_tlo.png"),
       fetchImageAsDataUrl("/10_znak_bez_orla_kolor_ciemne_tlo.png"),
+      import("pdfmake/build/pdfmake"),
+      import("pdfmake/build/vfs_fonts"),
     ]);
 
-    const pdfMakeClient = pdfMake as unknown as {
+    const pdfMakeClient = pdfMakeModule.default as unknown as {
       vfs: Record<string, string>;
       createPdf: (definition: Record<string, unknown>) => { download: (fileName: string) => void };
     };
-    const pdfFontsClient = pdfFonts as unknown as { vfs: Record<string, string> };
-    pdfMakeClient.vfs = pdfFontsClient.vfs;
+    pdfMakeClient.vfs = (pdfFontsModule.default as unknown as { vfs: Record<string, string> }).vfs;
 
     const pdfChartWidth = 500;
     const chartHeight = 220;
@@ -155,7 +154,7 @@ export async function exportPdf({
               noWrap: cellIndex !== 0,
             })),
           ),
-          processedData.totalsRow.map((cell, cellIndex) => ({
+          ...(processedData.totalsRow.length > 0 ? [processedData.totalsRow.map((cell, cellIndex) => ({
             text: cellIndex === 0 ? String(cell) : formatNumber(Number(cell)),
             bold: true,
             fontSize: 9,
@@ -164,7 +163,7 @@ export async function exportPdf({
             color: BRAND_DARK,
             margin: cellIndex === 0 ? [4, 4, 4, 4] : [8, 4, 0, 4],
             noWrap: cellIndex !== 0,
-          })),
+          }))] : []),
         ],
       },
       layout: {
