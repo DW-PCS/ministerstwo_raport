@@ -1,6 +1,6 @@
 import { toast } from '@/components/ui/use-toast';
 import type { ChainRow } from '@/hooks/useComparisonData';
-import { BRAND_DARK, BRAND_LIGHT, BRAND_PRIMARY } from '@/lib/helpers/report-download/constants';
+import { BRAND_DARK, BRAND_PRIMARY } from '@/lib/helpers/report-download/constants';
 import { buildDocxDocument, buildPdfDefinition } from '@/lib/helpers/report-download/documentTemplate';
 import { fetchImageAsDataUrl, fetchImageAsUint8Array } from '@/lib/helpers/report-download/visualUtils';
 import {
