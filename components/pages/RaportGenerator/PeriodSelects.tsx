@@ -23,6 +23,8 @@ const PeriodSelects = ({ isLoading, onReset }: PeriodSelectsProps) => {
     setSelectedChartTypes,
     breakdownByPeriod,
     setBreakdownByPeriod,
+    setShowTrendLine,
+    setTrendType,
   } = useRaportContext();
 
   const availableChartOptions = CHART_OPTIONS.filter(({ type }) =>
@@ -36,6 +38,10 @@ const PeriodSelects = ({ isLoading, onReset }: PeriodSelectsProps) => {
         checked ? type === 'bar_timeseries' : type !== 'bar_timeseries'
       );
       setSelectedChartTypes(newOptions.map(o => o.type));
+      if (checked) {
+        setShowTrendLine(true);
+        setTrendType('linear');
+      }
     }
   };
 
@@ -43,6 +49,10 @@ const PeriodSelects = ({ isLoading, onReset }: PeriodSelectsProps) => {
     setIncludeCharts(checked);
     if (checked) {
       setSelectedChartTypes(availableChartOptions.map(o => o.type));
+      if (breakdownByPeriod) {
+        setShowTrendLine(true);
+        setTrendType('linear');
+      }
     }
   };
 
