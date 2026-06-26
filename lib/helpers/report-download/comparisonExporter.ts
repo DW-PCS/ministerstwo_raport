@@ -40,9 +40,9 @@ function buildFilename(format: string, firstLabel: string, lastLabel: string): s
   return `raport-porownawczy_${range}.${format}`;
 }
 
-export function exportComparisonCsv(rows: string[][], firstLabel: string, lastLabel: string): void {
+export function exportComparisonCsv(rows: string[][], firstLabel: string, lastLabel: string, headers = HEADERS): void {
   try {
-    const csvRows = [HEADERS, ...rows].map(row => row.join(','));
+    const csvRows = [headers, ...rows].map(row => row.join(','));
     const csvContent = `﻿${csvRows.join('\n')}`;
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -59,7 +59,7 @@ export function exportComparisonCsv(rows: string[][], firstLabel: string, lastLa
   }
 }
 
-export function exportComparisonXlsx(rows: string[][], firstLabel: string, lastLabel: string): void {
+export function exportComparisonXlsx(rows: string[][], firstLabel: string, lastLabel: string, headers = HEADERS): void {
   try {
 
     const headerStyle = {
@@ -83,14 +83,14 @@ export function exportComparisonXlsx(rows: string[][], firstLabel: string, lastL
       sheet[ref] = { t: 's', v: value, s: style };
     };
 
-    HEADERS.forEach((header, col) => setCell(0, col, header, headerStyle));
+    headers.forEach((header, col) => setCell(0, col, header, headerStyle));
     rows.forEach((row, rowIdx) => {
-      row.forEach((cell, col) => setCell(rowIdx + 1, col, cell, col === 0 ? leftCellStyle : cellStyle));
+      row.forEach((cell, col) => setCell(rowIdx + 1, col, cell, leftCellStyle));
     });
 
     const rowCount = rows.length + 1;
-    sheet['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rowCount - 1, c: HEADERS.length - 1 } });
-    sheet['!cols'] = HEADERS.map((h, i) => ({ wch: Math.max(h.length, ...rows.map(r => (r[i] ?? '').length)) + 2 }));
+    sheet['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rowCount - 1, c: headers.length - 1 } });
+    sheet['!cols'] = headers.map((h, i) => ({ wch: Math.max(h.length, ...rows.map(r => (r[i] ?? '').length)) + 2 }));
     sheet['!rows'] = Array.from({ length: rowCount }, () => ({ hpt: 22 }));
 
     const workbook = XLSX.utils.book_new();
@@ -102,7 +102,7 @@ export function exportComparisonXlsx(rows: string[][], firstLabel: string, lastL
   }
 }
 
-export async function exportComparisonPdf(rows: string[][], title: string, firstLabel: string, lastLabel: string): Promise<void> {
+export async function exportComparisonPdf(rows: string[][], title: string, firstLabel: string, lastLabel: string, headers = HEADERS): Promise<void> {
   try {
 
     const [logoDataUrl, headerLogoDataUrl] = await Promise.all([
@@ -121,9 +121,9 @@ export async function exportComparisonPdf(rows: string[][], title: string, first
       width: 'auto',
       table: {
         headerRows: 1,
-        widths: ['auto', 'auto', 'auto', 'auto', 'auto'],
+        widths: headers.map(() => 'auto'),
         body: [
-          HEADERS.map((header, i) => ({
+          headers.map((header, i) => ({
             text: header,
             color: '#ffffff',
             bold: true,
@@ -171,7 +171,7 @@ export async function exportComparisonPdf(rows: string[][], title: string, first
   }
 }
 
-export async function exportComparisonDocx(rows: string[][], title: string, firstLabel: string, lastLabel: string): Promise<void> {
+export async function exportComparisonDocx(rows: string[][], title: string, firstLabel: string, lastLabel: string, headers = HEADERS, numericCols = [3, 4]): Promise<void> {
   try {
 
     const [logoBytes, headerLogoBytes] = await Promise.all([
@@ -181,22 +181,19 @@ export async function exportComparisonDocx(rows: string[][], title: string, firs
 
     const brandPrimaryHex = BRAND_PRIMARY.replace('#', '');
     const slateHex = 'CBD5E1';
+    const isNumeric = (col: number) => numericCols.includes(col);
 
-    const colMargins = (col: number) => ({
-      top: 60, bottom: 60,
-      left: 80,
-      right: col === 0 ? 40 : col === 2 || col === 3 ? 80 : 60,
-    });
+    const colMargins = () => ({ top: 60, bottom: 60, left: 80, right: 80 });
 
     const headerRow = new TableRow({
-      children: HEADERS.map((header, i) =>
+      children: headers.map((header, i) =>
         new TableCell({
           shading: { type: ShadingType.SOLID, color: brandPrimaryHex, fill: brandPrimaryHex },
           verticalAlign: VerticalAlign.CENTER,
-          margins: colMargins(i),
+          margins: colMargins(),
           children: [new Paragraph({
-            alignment: i < 3 ? AlignmentType.LEFT : AlignmentType.RIGHT,
-            indent: i >= 3 ? { right: 80 } : undefined,
+            alignment: isNumeric(i) ? AlignmentType.RIGHT : AlignmentType.LEFT,
+            indent: isNumeric(i) ? { right: 80 } : undefined,
             children: [new TextRun({ text: header, bold: true, color: 'FFFFFF', size: 18 })],
           })],
         })
@@ -211,10 +208,10 @@ export async function exportComparisonDocx(rows: string[][], title: string, firs
               ? { type: ShadingType.SOLID, color: 'F5F3FF', fill: 'F5F3FF' }
               : undefined,
             verticalAlign: VerticalAlign.CENTER,
-            margins: colMargins(cellIdx),
+            margins: colMargins(),
             children: [new Paragraph({
-              alignment: cellIdx < 3 ? AlignmentType.LEFT : AlignmentType.RIGHT,
-              indent: cellIdx >= 3 ? { right: 80 } : undefined,
+              alignment: isNumeric(cellIdx) ? AlignmentType.RIGHT : AlignmentType.LEFT,
+              indent: isNumeric(cellIdx) ? { right: 80 } : undefined,
               children: [new TextRun({ text: cell, size: 18, color: BRAND_DARK.replace('#', '') })],
             })],
           })

@@ -96,8 +96,9 @@ export default function ComparisonResults({ hook }: ComparisonResultsProps) {
   const variant2Rows = sortedRows.reduce<Array<{
     port: string;
     group: string;
-    pairLabel: string;
+    period1Label: string;
     tonnage1: number;
+    period2Label: string;
     tonnage2: number;
     change: number | null;
     key: string;
@@ -107,8 +108,9 @@ export default function ComparisonResults({ hook }: ComparisonResultsProps) {
       acc.push({
         port: row.port,
         group: row.group,
-        pairLabel: `${prev.periodLabel} – ${row.periodLabel}`,
+        period1Label: prev.periodLabel,
         tonnage1: prev.tonnage,
+        period2Label: row.periodLabel,
         tonnage2: row.tonnage,
         change: row.change,
         key: `${row.port}-${row.group}-${idx}`,
@@ -121,17 +123,23 @@ export default function ComparisonResults({ hook }: ComparisonResultsProps) {
   const firstLabel = submittedPeriods[0]?.label ?? '';
   const lastLabel = submittedPeriods[submittedPeriods.length - 1]?.label ?? firstLabel;
 
+  const V2_HEADERS = ['Port', 'Grupa towarowa', 'Okres 1', 'Tonaż 1 [t]', 'Okres 2', 'Tonaż 2 [t]', 'Zmiana'];
+  const V2_NUMERIC_COLS: number[] = [];
+
   async function handleDownload(format: 'csv' | 'xlsx' | 'pdf' | 'docx') {
     setIsDownloading(true);
     const fmtChange = (c: number | null) => c === null ? '–' : `${c >= 0 ? '+' : ''}${c.toFixed(1)}%`;
-    const exportRows: string[][] = variant === 1
-      ? sortedRows.map(r => [r.port, r.group, r.periodLabel, String(r.tonnage), fmtChange(r.change)])
-      : variant2Rows.map(r => [r.port, r.group, r.pairLabel, `${r.tonnage1} – ${r.tonnage2}`, fmtChange(r.change)]);
+    const isV2 = variant === 2;
+    const exportRows: string[][] = isV2
+      ? variant2Rows.map(r => [r.port, r.group, r.period1Label, String(r.tonnage1), r.period2Label, String(r.tonnage2), fmtChange(r.change)])
+      : sortedRows.map(r => [r.port, r.group, r.periodLabel, String(r.tonnage), fmtChange(r.change)]);
+    const headers = isV2 ? V2_HEADERS : undefined;
+    const numericCols = isV2 ? V2_NUMERIC_COLS : undefined;
     try {
-      if (format === 'csv') exportComparisonCsv(exportRows, firstLabel, lastLabel);
-      else if (format === 'xlsx') exportComparisonXlsx(exportRows, firstLabel, lastLabel);
-      else if (format === 'pdf') await exportComparisonPdf(exportRows, title, firstLabel, lastLabel);
-      else await exportComparisonDocx(exportRows, title, firstLabel, lastLabel);
+      if (format === 'csv') exportComparisonCsv(exportRows, firstLabel, lastLabel, headers);
+      else if (format === 'xlsx') exportComparisonXlsx(exportRows, firstLabel, lastLabel, headers);
+      else if (format === 'pdf') await exportComparisonPdf(exportRows, title, firstLabel, lastLabel, headers);
+      else await exportComparisonDocx(exportRows, title, firstLabel, lastLabel, headers, numericCols);
     } finally {
       setIsDownloading(false);
     }
@@ -262,8 +270,10 @@ export default function ComparisonResults({ hook }: ComparisonResultsProps) {
                 <TableRow className="bg-[#1a0069] hover:bg-[#1a0069]">
                   <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Port</TableHead>
                   <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Grupa towarowa</TableHead>
-                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Okres</TableHead>
-                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Tonaż [t]</TableHead>
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Okres 1</TableHead>
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Tonaż 1 [t]</TableHead>
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Okres 2</TableHead>
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Tonaż 2 [t]</TableHead>
                   <TableHead className="font-bold text-white whitespace-nowrap">Zmiana</TableHead>
                 </TableRow>
               </TableHeader>
@@ -280,10 +290,10 @@ export default function ComparisonResults({ hook }: ComparisonResultsProps) {
                     >
                       <TableCell className="border-r border-black/20 whitespace-nowrap font-medium">{row.port}</TableCell>
                       <TableCell className="border-r border-black/20 whitespace-nowrap">{row.group}</TableCell>
-                      <TableCell className="border-r border-black/20 whitespace-nowrap">{row.pairLabel}</TableCell>
-                      <TableCell className="tabular-nums border-r border-black/20 whitespace-nowrap">
-                        {formatNumber(row.tonnage1)} – {formatNumber(row.tonnage2)}
-                      </TableCell>
+                      <TableCell className="border-r border-black/20 whitespace-nowrap">{row.period1Label}</TableCell>
+                      <TableCell className="tabular-nums border-r border-black/20 whitespace-nowrap">{formatNumber(row.tonnage1)}</TableCell>
+                      <TableCell className="border-r border-black/20 whitespace-nowrap">{row.period2Label}</TableCell>
+                      <TableCell className="tabular-nums border-r border-black/20 whitespace-nowrap">{formatNumber(row.tonnage2)}</TableCell>
                       <TableCell className={cn('tabular-nums whitespace-nowrap', className)}>
                         {text}
                       </TableCell>
