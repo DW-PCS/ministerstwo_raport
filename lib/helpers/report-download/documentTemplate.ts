@@ -245,6 +245,7 @@ export function buildDocxDocument({
         }),
         new Paragraph({
           heading: HeadingLevel.HEADING_2,
+          alignment: AlignmentType.CENTER,
           spacing: { before: 240, after: 160 },
           children: [new TextRun({ text: 'Tabela danych', color: brandPrimaryHex, bold: true, size: 26 })],
         }),

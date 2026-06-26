@@ -1,5 +1,4 @@
 import { toast } from '@/components/ui/use-toast';
-import type { ChainRow } from '@/hooks/useComparisonData';
 import { BRAND_DARK, BRAND_PRIMARY } from '@/lib/helpers/report-download/constants';
 import { buildDocxDocument, buildPdfDefinition } from '@/lib/helpers/report-download/documentTemplate';
 import { fetchImageAsDataUrl, fetchImageAsUint8Array } from '@/lib/helpers/report-download/visualUtils';
@@ -41,25 +40,8 @@ function buildFilename(format: string, firstLabel: string, lastLabel: string): s
   return `raport-porownawczy_${range}.${format}`;
 }
 
-function formatChange(change: number | null): string {
-  if (change === null) return '–';
-  const sign = change >= 0 ? '+' : '';
-  return `${sign}${change.toFixed(1)}%`;
-}
-
-function toRows(chainRows: ChainRow[]): string[][] {
-  return chainRows.map(row => [
-    row.port,
-    row.group,
-    row.periodLabel,
-    String(row.tonnage),
-    formatChange(row.change),
-  ]);
-}
-
-export function exportComparisonCsv(chainRows: ChainRow[], firstLabel: string, lastLabel: string): void {
+export function exportComparisonCsv(rows: string[][], firstLabel: string, lastLabel: string): void {
   try {
-    const rows = toRows(chainRows);
     const csvRows = [HEADERS, ...rows].map(row => row.join(','));
     const csvContent = `﻿${csvRows.join('\n')}`;
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -77,9 +59,8 @@ export function exportComparisonCsv(chainRows: ChainRow[], firstLabel: string, l
   }
 }
 
-export function exportComparisonXlsx(chainRows: ChainRow[], firstLabel: string, lastLabel: string): void {
+export function exportComparisonXlsx(rows: string[][], firstLabel: string, lastLabel: string): void {
   try {
-    const rows = toRows(chainRows);
 
     const headerStyle = {
       font: { bold: true },
@@ -109,7 +90,7 @@ export function exportComparisonXlsx(chainRows: ChainRow[], firstLabel: string, 
 
     const rowCount = rows.length + 1;
     sheet['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rowCount - 1, c: HEADERS.length - 1 } });
-    sheet['!cols'] = [{ wch: 28 }, { wch: 28 }, { wch: 22 }, { wch: 16 }, { wch: 12 }];
+    sheet['!cols'] = HEADERS.map((h, i) => ({ wch: Math.max(h.length, ...rows.map(r => (r[i] ?? '').length)) + 2 }));
     sheet['!rows'] = Array.from({ length: rowCount }, () => ({ hpt: 22 }));
 
     const workbook = XLSX.utils.book_new();
@@ -121,9 +102,8 @@ export function exportComparisonXlsx(chainRows: ChainRow[], firstLabel: string, 
   }
 }
 
-export async function exportComparisonPdf(chainRows: ChainRow[], title: string, firstLabel: string, lastLabel: string): Promise<void> {
+export async function exportComparisonPdf(rows: string[][], title: string, firstLabel: string, lastLabel: string): Promise<void> {
   try {
-    const rows = toRows(chainRows);
 
     const [logoDataUrl, headerLogoDataUrl] = await Promise.all([
       fetchImageAsDataUrl('/05_znak_uproszczony_kolor_biale_tlo.png'),
@@ -137,29 +117,28 @@ export async function exportComparisonPdf(chainRows: ChainRow[], title: string, 
     const pdfFontsClient = pdfFonts as unknown as { vfs: Record<string, string> };
     pdfMakeClient.vfs = pdfFontsClient.vfs;
 
-    const mainTableContent = {
+    const tableBlock = {
+      width: 'auto',
       table: {
         headerRows: 1,
-        widths: ['*', '*', 'auto', 'auto', 'auto'],
+        widths: ['auto', 'auto', 'auto', 'auto', 'auto'],
         body: [
           HEADERS.map((header, i) => ({
             text: header,
             color: '#ffffff',
             bold: true,
             fontSize: 9,
-            alignment: i < 3 ? 'left' : 'right',
+            alignment: 'left',
             fillColor: BRAND_PRIMARY,
-            margin: i < 3 ? [4, 4, 4, 4] : [10, 4, 0, 4],
-            noWrap: i >= 3,
+            margin: [4, 4, i === 0 ? 2 : 4, 4],
           })),
           ...rows.map((row, rowIdx) =>
-            row.map((cell, cellIdx) => ({
+            row.map((cell, i) => ({
               text: cell,
               fontSize: 9,
-              alignment: cellIdx < 3 ? 'left' : 'right',
+              alignment: 'left',
               fillColor: rowIdx % 2 === 0 ? '#f5f3ff' : undefined,
-              margin: cellIdx < 3 ? [4, 3, 4, 3] : [10, 3, 0, 3],
-              noWrap: cellIdx >= 3,
+              margin: [4, 3, i === 0 ? 2 : 4, 3],
             }))
           ),
         ],
@@ -170,6 +149,10 @@ export async function exportComparisonPdf(chainRows: ChainRow[], title: string, 
         hLineWidth: () => 0.5,
         vLineWidth: () => 0.5,
       },
+    };
+
+    const mainTableContent = {
+      columns: [{ width: '*', text: '' }, tableBlock, { width: '*', text: '' }],
     };
 
     const definition = buildPdfDefinition({
@@ -188,9 +171,8 @@ export async function exportComparisonPdf(chainRows: ChainRow[], title: string, 
   }
 }
 
-export async function exportComparisonDocx(chainRows: ChainRow[], title: string, firstLabel: string, lastLabel: string): Promise<void> {
+export async function exportComparisonDocx(rows: string[][], title: string, firstLabel: string, lastLabel: string): Promise<void> {
   try {
-    const rows = toRows(chainRows);
 
     const [logoBytes, headerLogoBytes] = await Promise.all([
       fetchImageAsUint8Array('/05_znak_uproszczony_kolor_biale_tlo.png'),
@@ -200,12 +182,18 @@ export async function exportComparisonDocx(chainRows: ChainRow[], title: string,
     const brandPrimaryHex = BRAND_PRIMARY.replace('#', '');
     const slateHex = 'CBD5E1';
 
+    const colMargins = (col: number) => ({
+      top: 60, bottom: 60,
+      left: 80,
+      right: col === 0 ? 40 : col === 2 || col === 3 ? 80 : 60,
+    });
+
     const headerRow = new TableRow({
       children: HEADERS.map((header, i) =>
         new TableCell({
           shading: { type: ShadingType.SOLID, color: brandPrimaryHex, fill: brandPrimaryHex },
           verticalAlign: VerticalAlign.CENTER,
-          margins: { top: 60, bottom: 60, right: 30 },
+          margins: colMargins(i),
           children: [new Paragraph({
             alignment: i < 3 ? AlignmentType.LEFT : AlignmentType.RIGHT,
             indent: i >= 3 ? { right: 80 } : undefined,
@@ -223,7 +211,7 @@ export async function exportComparisonDocx(chainRows: ChainRow[], title: string,
               ? { type: ShadingType.SOLID, color: 'F5F3FF', fill: 'F5F3FF' }
               : undefined,
             verticalAlign: VerticalAlign.CENTER,
-            margins: { top: 60, bottom: 60, right: 30 },
+            margins: colMargins(cellIdx),
             children: [new Paragraph({
               alignment: cellIdx < 3 ? AlignmentType.LEFT : AlignmentType.RIGHT,
               indent: cellIdx >= 3 ? { right: 80 } : undefined,
@@ -234,19 +222,11 @@ export async function exportComparisonDocx(chainRows: ChainRow[], title: string,
       })
     );
 
-    const DOCX_PAGE_WIDTH = 10906;
-    const NATURAL_WIDTHS = [2800, 2800, 1600, 1200, 1000];
-    const naturalTotal = NATURAL_WIDTHS.reduce((a, b) => a + b, 0);
-    const scale = DOCX_PAGE_WIDTH / naturalTotal;
-    const columnWidths = NATURAL_WIDTHS.map((w) => Math.floor(w * scale));
-    const scaledSum = columnWidths.reduce((a, b) => a + b, 0);
-    columnWidths[columnWidths.length - 1] += DOCX_PAGE_WIDTH - scaledSum;
-
     const reportTable = new Table({
       rows: [headerRow, ...dataRows],
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      layout: TableLayoutType.FIXED,
-      columnWidths,
+      width: { size: 0, type: WidthType.AUTO },
+      layout: TableLayoutType.AUTOFIT,
+      alignment: AlignmentType.CENTER,
       borders: {
         top: { style: BorderStyle.SINGLE, size: 4, color: slateHex },
         bottom: { style: BorderStyle.SINGLE, size: 4, color: slateHex },
