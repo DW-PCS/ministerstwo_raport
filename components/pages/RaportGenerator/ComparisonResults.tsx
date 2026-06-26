@@ -70,6 +70,7 @@ export default function ComparisonResults({ hook }: ComparisonResultsProps) {
   const { chainRows, submittedPeriods, isGenerated } = hook;
   const [isDownloading, setIsDownloading] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>('chronological');
+  const [variant, setVariant] = useState<1 | 2>(1);
 
   const sortedRows = [...chainRows]
     .sort((a, b) => {
@@ -92,17 +93,45 @@ export default function ComparisonResults({ hook }: ComparisonResultsProps) {
       return { ...row, change };
     });
 
+  const variant2Rows = sortedRows.reduce<Array<{
+    port: string;
+    group: string;
+    pairLabel: string;
+    tonnage1: number;
+    tonnage2: number;
+    change: number | null;
+    key: string;
+  }>>((acc, row, idx) => {
+    if (row.change !== null) {
+      const prev = sortedRows[idx - 1];
+      acc.push({
+        port: row.port,
+        group: row.group,
+        pairLabel: `${prev.periodLabel} – ${row.periodLabel}`,
+        tonnage1: prev.tonnage,
+        tonnage2: row.tonnage,
+        change: row.change,
+        key: `${row.port}-${row.group}-${idx}`,
+      });
+    }
+    return acc;
+  }, []);
+
   const title = getTitle(submittedPeriods);
   const firstLabel = submittedPeriods[0]?.label ?? '';
   const lastLabel = submittedPeriods[submittedPeriods.length - 1]?.label ?? firstLabel;
 
   async function handleDownload(format: 'csv' | 'xlsx' | 'pdf' | 'docx') {
     setIsDownloading(true);
+    const fmtChange = (c: number | null) => c === null ? '–' : `${c >= 0 ? '+' : ''}${c.toFixed(1)}%`;
+    const exportRows: string[][] = variant === 1
+      ? sortedRows.map(r => [r.port, r.group, r.periodLabel, String(r.tonnage), fmtChange(r.change)])
+      : variant2Rows.map(r => [r.port, r.group, r.pairLabel, `${r.tonnage1} – ${r.tonnage2}`, fmtChange(r.change)]);
     try {
-      if (format === 'csv') exportComparisonCsv(chainRows, firstLabel, lastLabel);
-      else if (format === 'xlsx') exportComparisonXlsx(chainRows, firstLabel, lastLabel);
-      else if (format === 'pdf') await exportComparisonPdf(chainRows, title, firstLabel, lastLabel);
-      else await exportComparisonDocx(chainRows, title, firstLabel, lastLabel);
+      if (format === 'csv') exportComparisonCsv(exportRows, firstLabel, lastLabel);
+      else if (format === 'xlsx') exportComparisonXlsx(exportRows, firstLabel, lastLabel);
+      else if (format === 'pdf') await exportComparisonPdf(exportRows, title, firstLabel, lastLabel);
+      else await exportComparisonDocx(exportRows, title, firstLabel, lastLabel);
     } finally {
       setIsDownloading(false);
     }
@@ -171,45 +200,99 @@ export default function ComparisonResults({ hook }: ComparisonResultsProps) {
         </div>
       </CardHeader>
       <CardContent className="p-0 bg-white">
+        <div className="flex gap-1 px-6 pt-4">
+          {([1, 2] as const).map(v => (
+            <button
+              key={v}
+              onClick={() => setVariant(v)}
+              className={cn(
+                'px-4 py-1.5 text-sm rounded-md font-medium transition-colors',
+                variant === v ? 'bg-[#1a0069] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              )}
+            >
+              {v === 1 ? 'Wariant 1' : 'Wariant 2'}
+            </button>
+          ))}
+        </div>
+        <p className="px-6 pt-2 pb-0 text-xs text-muted-foreground">
+          {variant === 1
+            ? 'Każdy okres wyświetlany w osobnym wierszu ze zmianą względem poprzedniego okresu.'
+            : 'Kolejne okresy zestawione parami w jednym wierszu – tonaż i zmiana między nimi.'}
+        </p>
         <div className="overflow-x-auto px-6 py-4">
-          <Table className="w-auto">
-            <TableHeader>
-              <TableRow className="bg-[#1a0069] hover:bg-[#1a0069]">
-                <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Port</TableHead>
-                <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Grupa towarowa</TableHead>
-                <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Okres</TableHead>
-                <TableHead className="text-right font-bold text-white border-r border-white/20 whitespace-nowrap">Tonaż [t]</TableHead>
-                <TableHead className="text-right font-bold text-white whitespace-nowrap">Zmiana</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedRows.map((row, idx) => {
-                const { text, className } = formatChange(row.change);
-                const prevRow = sortedRows[idx - 1];
-                const isNewGroup = idx === 0 || prevRow.port !== row.port || prevRow.group !== row.group;
-                return (
-                  <TableRow
-                    key={`${row.port}-${row.group}-${row.periodIndex}`}
-                    className={cn(
-                      'border-black/20 hover:bg-purple-50',
-                      idx % 2 === 0 ? 'bg-[#f5f3ff]' : 'bg-white',
-                      isNewGroup && idx !== 0 && 'border-t-2 border-t-[#1a0069]'
-                    )}
-                  >
-                    <TableCell className="border-r border-black/20 whitespace-nowrap font-medium">{row.port}</TableCell>
-                    <TableCell className="border-r border-black/20 whitespace-nowrap">{row.group}</TableCell>
-                    <TableCell className="border-r border-black/20 whitespace-nowrap">{row.periodLabel}</TableCell>
-                    <TableCell className="text-right tabular-nums border-r border-black/20 whitespace-nowrap">
-                      {formatNumber(row.tonnage)}
-                    </TableCell>
-                    <TableCell className={cn('text-right tabular-nums whitespace-nowrap', className)}>
-                      {text}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          {variant === 1 ? (
+            <Table className="w-auto">
+              <TableHeader>
+                <TableRow className="bg-[#1a0069] hover:bg-[#1a0069]">
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Port</TableHead>
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Grupa towarowa</TableHead>
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Okres</TableHead>
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Tonaż [t]</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Zmiana</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedRows.map((row, idx) => {
+                  const { text, className } = formatChange(row.change);
+                  return (
+                    <TableRow
+                      key={`${row.port}-${row.group}-${row.periodIndex}`}
+                      className={cn(
+                        'border-black/20 hover:bg-purple-50',
+                        idx % 2 === 0 ? 'bg-[#f5f3ff]' : 'bg-white'
+                      )}
+                    >
+                      <TableCell className="border-r border-black/20 whitespace-nowrap font-medium">{row.port}</TableCell>
+                      <TableCell className="border-r border-black/20 whitespace-nowrap">{row.group}</TableCell>
+                      <TableCell className="border-r border-black/20 whitespace-nowrap">{row.periodLabel}</TableCell>
+                      <TableCell className="tabular-nums border-r border-black/20 whitespace-nowrap">
+                        {formatNumber(row.tonnage)}
+                      </TableCell>
+                      <TableCell className={cn('tabular-nums whitespace-nowrap', className)}>
+                        {text}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          ) : (
+            <Table className="w-auto">
+              <TableHeader>
+                <TableRow className="bg-[#1a0069] hover:bg-[#1a0069]">
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Port</TableHead>
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Grupa towarowa</TableHead>
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Okres</TableHead>
+                  <TableHead className="font-bold text-white border-r border-white/20 whitespace-nowrap">Tonaż [t]</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Zmiana</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {variant2Rows.map((row, idx) => {
+                  const { text, className } = formatChange(row.change);
+                  return (
+                    <TableRow
+                      key={row.key}
+                      className={cn(
+                        'border-black/20 hover:bg-purple-50',
+                        idx % 2 === 0 ? 'bg-[#f5f3ff]' : 'bg-white'
+                      )}
+                    >
+                      <TableCell className="border-r border-black/20 whitespace-nowrap font-medium">{row.port}</TableCell>
+                      <TableCell className="border-r border-black/20 whitespace-nowrap">{row.group}</TableCell>
+                      <TableCell className="border-r border-black/20 whitespace-nowrap">{row.pairLabel}</TableCell>
+                      <TableCell className="tabular-nums border-r border-black/20 whitespace-nowrap">
+                        {formatNumber(row.tonnage1)} – {formatNumber(row.tonnage2)}
+                      </TableCell>
+                      <TableCell className={cn('tabular-nums whitespace-nowrap', className)}>
+                        {text}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </CardContent>
     </Card>
