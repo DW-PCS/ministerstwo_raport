@@ -62,6 +62,10 @@ index.ts
 - No explanations
 - Ask before making breaking changes
 
+## Git
+
+- Do not mention Claude or AI assistance in commit messages
+
 ## Styles
 
 - use cn to conditonal styles
