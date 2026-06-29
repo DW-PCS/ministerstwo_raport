@@ -1,6 +1,8 @@
 import type { TrendType } from '@/lib/helpers/trend-helpers';
 import type { ChartType } from '@/types';
 
+export const SESSION_TIMEOUT_SECONDS = 30 * 60; // 30 minutes
+
 export const COLORS = [
   '#1a0069',
   '#ff7f0e',

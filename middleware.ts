@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { SESSION_TIMEOUT_SECONDS } from '@/constants';
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('access_token')?.value;
@@ -18,6 +19,15 @@ export async function middleware(request: NextRequest) {
 
   const response = NextResponse.next();
   response.headers.set('x-pathname', pathname);
+  if (token) {
+    response.cookies.set('access_token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: SESSION_TIMEOUT_SECONDS,
+    });
+  }
   return response;
 }
 

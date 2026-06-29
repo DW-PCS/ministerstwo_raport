@@ -1,5 +1,6 @@
 'use server';
 
+import { SESSION_TIMEOUT_SECONDS } from '@/constants';
 import { loginUser } from '@/lib/api/reportApiService';
 import { cookies } from 'next/headers';
 
@@ -12,6 +13,7 @@ export async function loginAction(username: string, password: string): Promise<{
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
+      maxAge: SESSION_TIMEOUT_SECONDS,
     });
     return { success: true };
   } catch {
