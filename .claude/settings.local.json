@@ -7,7 +7,9 @@
       "Bash(node -e \"const pkg = require\\(''./package.json''\\); console.log\\(''next:'', pkg.dependencies.next\\)\")",
       "Bash(node -e \"const pkg = require\\(''./package.json''\\); console.log\\(''next:'', pkg.dependencies.next, ''\\\\ntailwindcss:'', pkg.devDependencies.tailwindcss, ''\\\\n@tailwindcss/postcss:'', pkg.devDependencies[''@tailwindcss/postcss'']\\)\")",
       "Bash(node -e \":*)",
-      "Bash(node -e \"const d = require\\(''docx''\\); console.log\\(Object.keys\\(d\\)\\)\")"
+      "Bash(node -e \"const d = require\\(''docx''\\); console.log\\(Object.keys\\(d\\)\\)\")",
+      "Bash(git -C /Users/daniel.wisniewski/projects/ministerstwo_raport add components/pages/RaportGenerator/ComparisonResults.tsx)",
+      "Bash(git -C /Users/daniel.wisniewski/projects/ministerstwo_raport commit -m ' *)"
     ]
   }
 }

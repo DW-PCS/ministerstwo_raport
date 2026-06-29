@@ -68,10 +68,7 @@ export function exportComparisonXlsx(rows: string[][], firstLabel: string, lastL
       fill: { patternType: 'solid', fgColor: { rgb: 'D9D9D9' } },
       border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } },
     };
-    const cellStyle = {
-      alignment: { horizontal: 'center', vertical: 'center' },
-      border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } },
-    };
+
     const leftCellStyle = {
       alignment: { horizontal: 'left', vertical: 'center' },
       border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } },
